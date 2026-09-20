@@ -1,15 +1,89 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="MusicLink is a free toolkit for independent musicians."><title>MusicLink | Independent Music Toolkit</title><link rel="stylesheet" href="style.css"></head><body>
-<header><a class="logo" href="#"><b>M</b> MusicLink</a><nav><a href="#tools">Tools</a><a href="#about">About</a><a class="cta" href="#tools">Start free</a></nav></header>
-<main><section class="hero"><div><label>FREE MUSIC TOOLKIT</label><h1>Make your next release <em>more organized.</em></h1><p>Practical browser based tools for independent artists. Plan releases, prepare EPK content, organize promotion and keep studio work on track.</p><a class="primary" href="#tools">Explore the tools</a></div><div class="mock"><div class="dots">● ● ● <span>release_plan</span></div><div class="mockbody"><small>ARTIST</small><strong>Young Nova</strong><small>RELEASE</small><strong>New single</strong><div class="bar"><i></i></div><div class="steps">✓ Artwork<br>✓ Credits<br>○ EPK<br>○ Promotion</div></div></div></section>
-<section class="strip"><span>INDEPENDENT ARTISTS</span><span>RELEASES</span><span>EPK</span><span>PROMOTION</span><span>STUDIO</span></section>
-<section id="tools" class="section"><label>THE TOOLKIT</label><h2>Everything you need before you press publish.</h2><p class="intro">Small tools. Clear steps. Built for artists doing their own work.</p><div class="grid">
-<article data-tool="release"><i>01</i><h3>Release Planner</h3><p>Build a simple timeline from announcement to launch day.</p><button>Open planner →</button></article>
-<article data-tool="epk"><i>02</i><h3>EPK Builder</h3><p>Prepare the core information for an electronic press kit.</p><button>Build EPK →</button></article>
-<article data-tool="promotion"><i>03</i><h3>Promotion Planner</h3><p>Turn one release into a practical seven day content plan.</p><button>Plan promotion →</button></article>
-<article data-tool="studio"><i>04</i><h3>Studio Checklist</h3><p>Keep vocals, files, credits and session details organized.</p><button>Open checklist →</button></article>
-<article data-tool="collab"><i>05</i><h3>Collaboration Checklist</h3><p>Track credits, splits, files and approvals before release.</p><button>Open checklist →</button></article>
-<article data-tool="profile"><i>06</i><h3>Artist Profile</h3><p>Build a clean artist bio from a few details about your sound.</p><button>Create profile →</button></article></div></section>
-<section class="green"><label>WHY IT EXISTS</label><h2>Independent music has enough moving parts.</h2><p>MusicLink keeps the practical side in one place, so artists spend less time remembering tasks and more time making music.</p></section>
-<section id="about" class="about"><div><label>BUILT FROM TWO WORLDS</label><h2>Software engineering × music.</h2></div><p>MusicLink started as a personal project by Nova, a software engineering student and independent artist. It explores how simple software tools support the independent music workflow. It is free, browser based and designed to grow with artist feedback.</p></section></main>
-<footer><div><b>MusicLink</b><br><span>A free toolkit for independent musicians.</span></div><div>Built by Nova<br><span>Software Engineering × Music</span></div></footer>
-<div id="modal" class="modal"><div class="box"><button id="close">×</button><div id="content"></div></div></div><script src="script.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="MusicLink is a free browser-based toolkit for independent musicians.">
+<meta name="theme-color" content="#07080a">
+<title>MusicLink | Independent Music Toolkit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="noise"></div>
+<div class="cursor-glow"></div>
+<header class="site-header">
+  <a class="logo" href="#top"><span class="logo-mark">M</span><span>MusicLink</span></a>
+  <nav><a href="#tools">Tools</a><a href="#workflow">Workflow</a><a href="#about">About</a><a class="header-cta" href="#tools">Start free <span>↘</span></a></nav>
+</header>
+
+<main id="top">
+<section class="hero">
+  <div class="hero-copy reveal">
+    <div class="eyebrow"><span class="live-dot"></span> FREE MUSIC WORKSPACE <span class="eyebrow-line"></span> 0 API REQUIRED</div>
+    <h1>Your music.<br><span class="outline">Your workflow.</span><br>Your <em>link.</em></h1>
+    <p class="hero-lead">A focused browser toolkit for independent artists. Plan releases, build artist copy, organize studio work and turn ideas into repeatable workflows.</p>
+    <div class="hero-actions"><a class="primary" href="#tools">Explore toolkit <span>↘</span></a><a class="text-link" href="#about">Why MusicLink</a></div>
+    <div class="hero-meta"><span><b>06</b> tools</span><span><b>100%</b> browser</span><span><b>0</b> backend</span></div>
+  </div>
+  <div class="hero-visual reveal delay">
+    <div class="orb orb-a"></div><div class="orb orb-b"></div>
+    <div class="dashboard">
+      <div class="dash-top"><span><i></i><i></i><i></i></span><code>musiclink / release-os</code><b>LIVE</b></div>
+      <div class="dash-head"><div><small>RELEASE READINESS</small><strong>New single</strong></div><div class="score">72<span>%</span></div></div>
+      <div class="progress"><span></span></div>
+      <div class="dash-grid">
+        <div class="dash-item done"><span>01</span><b>Master</b><em>READY</em></div>
+        <div class="dash-item done"><span>02</span><b>Artwork</b><em>READY</em></div>
+        <div class="dash-item"><span>03</span><b>EPK</b><em>TODO</em></div>
+        <div class="dash-item"><span>04</span><b>Promotion</b><em>TODO</em></div>
+      </div>
+      <div class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="dash-footer"><span>NEXT MILESTONE</span><b>Prepare release campaign</b><span class="pulse-status">● ON TRACK</span></div>
+    </div>
+    <div class="floating-tag tag-one">RELEASE / 01</div><div class="floating-tag tag-two">ARTIST OS</div>
+  </div>
+</section>
+
+<section class="ticker"><div><span>INDEPENDENT ARTISTS</span><i>✦</i><span>RELEASES</span><i>✦</i><span>EPK</span><i>✦</i><span>PROMOTION</span><i>✦</i><span>STUDIO</span><i>✦</i><span>COLLABS</span><i>✦</i></div></section>
+
+<section id="tools" class="section tools-section">
+  <div class="section-head reveal"><div><span class="eyebrow">THE TOOLKIT / 06</span><h2>Less admin.<br><span>More momentum.</span></h2></div><p>Small tools built around the real tasks behind an independent release. Everything runs in your browser.</p></div>
+  <div class="tool-grid">
+    <article class="tool-card featured reveal" data-tool="release"><div class="card-top"><span>01 / RELEASE</span><b>↗</b></div><div class="card-icon">◒</div><h3>Release Planner</h3><p>Build a launch timeline from master delivery to release day.</p><button>Open planner <span>→</span></button></article>
+    <article class="tool-card reveal" data-tool="epk"><div class="card-top"><span>02 / IDENTITY</span><b>↗</b></div><div class="card-icon">◫</div><h3>EPK Builder</h3><p>Shape the essential information for a clean electronic press kit.</p><button>Build EPK <span>→</span></button></article>
+    <article class="tool-card reveal" data-tool="promotion"><div class="card-top"><span>03 / PROMO</span><b>↗</b></div><div class="card-icon">⌁</div><h3>Promotion Planner</h3><p>Turn one release into seven focused content actions.</p><button>Plan promotion <span>→</span></button></article>
+    <article class="tool-card reveal" data-tool="studio"><div class="card-top"><span>04 / STUDIO</span><b>↗</b></div><div class="card-icon">◉</div><h3>Studio Checklist</h3><p>Keep takes, exports, credits and session files under control.</p><button>Open checklist <span>→</span></button></article>
+    <article class="tool-card reveal" data-tool="collab"><div class="card-top"><span>05 / COLLAB</span><b>↗</b></div><div class="card-icon">⌘</div><h3>Collaboration</h3><p>Track roles, splits, ownership, artwork and approvals.</p><button>Open checklist <span>→</span></button></article>
+    <article class="tool-card reveal" data-tool="profile"><div class="card-top"><span>06 / PROFILE</span><b>↗</b></div><div class="card-icon">◎</div><h3>Artist Profile</h3><p>Generate a clean starting bio from your sound and story.</p><button>Create profile <span>→</span></button></article>
+  </div>
+</section>
+
+<section id="workflow" class="workflow">
+  <div class="workflow-inner">
+    <div class="reveal"><span class="eyebrow">THE FLOW / 01—04</span><h2>From rough idea<br>to <span>release-ready.</span></h2><p>MusicLink follows the sequence artists already understand. The interface stays out of the way.</p></div>
+    <div class="steps">
+      <div class="flow-step reveal"><span>01</span><div><b>PLAN</b><p>Set the release date, milestones and practical tasks.</p></div></div>
+      <div class="flow-step reveal"><span>02</span><div><b>BUILD</b><p>Prepare your artist profile and EPK information.</p></div></div>
+      <div class="flow-step reveal"><span>03</span><div><b>PROMOTE</b><p>Turn your release into a simple content sequence.</p></div></div>
+      <div class="flow-step reveal"><span>04</span><div><b>DELIVER</b><p>Check files, credits, links and collaboration details.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="manifesto"><div class="manifesto-mark">ML</div><span class="eyebrow">WHY IT EXISTS</span><h2>Independent music has enough moving parts.</h2><p>MusicLink keeps the practical side visible in one place, so the software supports the creative process instead of becoming another thing to manage.</p></section>
+
+<section id="about" class="about section">
+  <div class="reveal"><span class="eyebrow">BUILT FROM TWO WORLDS</span><h2>Software engineering <span>×</span> music.</h2></div>
+  <div class="about-copy reveal"><p>MusicLink is a zero-cost browser project exploring how lightweight software tools fit into the independent music workflow.</p><div class="specs"><span><b>FRONTEND</b> HTML / CSS / JS</span><span><b>RUNTIME</b> Browser only</span><span><b>MODEL</b> No API required</span><span><b>HOSTING</b> GitHub Pages</span></div></div>
+</section>
+</main>
+
+<footer><div><b>MusicLink<span class="accent">.</span></b><p>A free toolkit for independent musicians.</p></div><div class="footer-right"><span>BUILT BY NOVA</span><span>SOFTWARE ENGINEERING × MUSIC</span></div></footer>
+
+<div id="modal" class="modal" aria-hidden="true"><div class="box"><button id="close" aria-label="Close">×</button><div id="content"></div></div></div>
+<script src="script.js"></script>
+</body>
+</html>
