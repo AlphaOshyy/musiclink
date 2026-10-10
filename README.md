@@ -1,46 +1,61 @@
 # MusicLink
 
-MusicLink is a prototype for independent musicians. Its new core concept is **BlindMatch**, a profile blind audition workflow for finding collaborators based on project fit before public popularity signals are revealed.
+MusicLink is an independent artist workspace designed to bring collaborator discovery, blind auditions, project coordination, studio organization and release planning into one place.
 
-## Current prototype
+## Full workspace redesign
 
-The GitHub Pages site currently provides:
-- A BlindMatch project brief form.
-- Sample anonymous audition cards.
-- Local audition submission with optional audio preview.
-- Configurable ratings and a transparent compatibility score.
-- Ranking by fit and profile reveal for auditions rated 4/5 or higher.
-- Existing release planning, artist profile, promotion, studio and collaboration tools.
+The GitHub Pages prototype now has a unified app-style interface with a persistent sidebar, overview dashboard, artist discovery, BlindMatch, collaboration board, studio workspace, messages, release planner, promotion lab, press kit builder, artist profile, notifications and settings.
 
-The BlindMatch demo stores project details, audition metadata and ratings in the browser's local storage. Uploaded audio previews use temporary browser object URLs. They are not uploaded to a server and do not survive a page reload. The current site does not provide real accounts, secure multi-user blind review, server-side permissions or production media storage.
+### Features in the browser prototype
+
+- **Overview dashboard:** project cards, workspace metrics, activity feed and quick actions.
+- **Discover artists:** sample artist directory with search and genre/role filters.
+- **BlindMatch:** editable project briefs, anonymous audition cards, optional local audio preview, explainable fit scores, human ratings, ranking and shortlist profile reveal.
+- **Collaboration board:** create projects, edit descriptions/status/next milestone/progress, filter by status and advance the workflow.
+- **Studio workspace:** track list, local audio previews, track status and a persistent session checklist.
+- **Messages:** sample conversations with local-only outgoing messages.
+- **Release planner:** save releases and generate a seven-step timeline with checkable milestones.
+- **Promotion lab:** create a seven-day content plan and track completion.
+- **Press kit builder:** generate artist bio, highlights and official-link copy from entered details.
+- **Artist profile:** edit name, location, genre, bio, skills, links and collaboration availability.
+- **Notifications and settings:** read/mark notifications and reset the local demo workspace.
+- **Responsive layout:** desktop sidebar and mobile navigation drawer.
 
 ## Run locally
 
-Open `index.html` in a modern browser, or serve the folder with any static web server. No build step or paid API is required.
+Open index.html in a modern browser or serve the repository folder with a static web server. No build step or paid API is required.
 
-## Planned HNDSE full-stack architecture
+## Important prototype limitations
 
-- Frontend: HTML/CSS/JavaScript prototype, later React with Vite.
+This is a front-end demonstration, not a production multi-user service. Workspace records are stored in the current browser's local storage. Sample profiles, conversations, metrics and notifications are illustrative. Optional audio files use temporary browser object URLs and are not uploaded or preserved after reload. Clipboard support depends on browser permissions.
+
+The current demo does **not** provide real authentication, server-side authorization, secure identity-blind auditions, shared database records, private cloud media storage, cross-user messages, or real-time notifications. Hiding a profile in the UI is not a security boundary, and a voice may itself identify its creator. Do not upload confidential or unreleased music.
+
+## Planned full-stack architecture
+
+- Frontend: React with Vite, or keep the current HTML/CSS/JavaScript interface while implementing the backend.
 - API: Node.js and Express.
 - Database: MongoDB with Mongoose.
-- Media: object storage for audio and artwork.
-- Testing: unit, API and browser workflow tests.
+- Authentication: password hashing and secure sessions or short-lived tokens.
+- Media: private object storage, file validation and short-lived signed URLs.
+- Messaging and notifications: database-backed conversations, unread state and optional Socket.IO.
+- Testing: unit tests for matching and scoring, API authorization tests, and browser workflow tests.
 
 ## Core BlindMatch workflow
 
-1. Create a project brief with the needed role, language, genre, mood and delivery requirements.
-2. Creators submit audition metadata and an audio clip.
-3. The owner reviews anonymous audition cards and rates musical fit.
-4. A transparent scoring function ranks eligible submissions.
+1. Create a project brief with role, language, genre, mood and delivery requirements.
+2. Creators submit audition metadata and an audio file.
+3. The project owner reviews blind audition IDs and rates musical fit.
+4. A transparent score ranks submissions against the brief.
 5. The owner reveals profiles for shortlisted auditions.
-6. A selected collaborator enters a tracked project workflow.
+6. Selected creators move into a collaboration workflow with revisions, approval and completion.
 
-Blind review hides profile fields in the first-stage interface. It does not guarantee anonymity because voice and musical style can be recognizable.
+The intended contribution is the integration and evaluation of a profile-blind audition workflow with explainable compatibility scoring and structured post-selection collaboration, not a claim that anonymous auditions have never existed. A competitor review and user evaluation are needed before making novelty claims.
 
 ## Documentation
 
-See [docs/BLINDMATCH_PROJECT_SPEC.md](docs/BLINDMATCH_PROJECT_SPEC.md) for the proposed problem statement, scope, data model, API plan, algorithm and evaluation method.
+See docs/BLINDMATCH_PROJECT_SPEC.md for the HNDSE project problem statement, proposed architecture, data model, API plan, evaluation method and scope.
 
 ## Status
 
-This is an early browser prototype. Do not use it for private unreleased music, real identity verification, legal ownership claims or confidential collaboration data until server-side authentication, authorization, secure media handling and privacy controls are implemented.
+The interface and local demo interactions have been redesigned. A secure backend, persistent shared data, production media handling and formal testing remain future implementation work.
