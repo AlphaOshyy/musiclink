@@ -1,131 +1,108 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="MusicLink BlindMatch helps independent musicians find collaborators through blind auditions, compatibility scoring and structured project workflows.">
-<meta name="theme-color" content="#07080a">
-<title>MusicLink | BlindMatch for Independent Artists</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#08090c"><meta name="description" content="MusicLink is an independent artist workspace for discovering collaborators, blind auditions, project tracking and release planning.">
+<title>MusicLink — Independent Artist Workspace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="noise"></div>
-<div class="cursor-glow"></div>
-<header class="site-header">
-  <a class="logo" href="#top"><span class="logo-mark">M</span><span>MusicLink</span></a>
-  <nav><a href="#blindmatch">BlindMatch</a><a href="#tools">Tools</a><a href="#workflow">Workflow</a><a href="#about">About</a><a class="header-cta" href="#blindmatch">Try demo <span>↘</span></a></nav>
-</header>
-
-<main id="top">
-<section class="hero">
-  <div class="hero-copy reveal">
-    <div class="eyebrow"><span class="live-dot"></span> BLIND AUDITIONS <span class="eyebrow-line"></span> BUILT FOR INDIE MUSIC</div>
-    <h1>Find your<br><span class="outline">next sound.</span><br>Make it <em>real.</em></h1>
-    <p class="hero-lead">Turn unfinished musical ideas into real collaborations. MusicLink BlindMatch lets artists audition for a specific role before public profiles and popularity signals enter the decision.</p>
-    <div class="hero-actions"><a class="primary" href="#blindmatch">Try BlindMatch <span>↘</span></a><a class="text-link" href="#about">How it works</a></div>
-    <div class="hero-meta"><span><b>01</b> blind audition flow</span><span><b>04</b> match signals</span><span><b>0</b> paid AI APIs</span></div>
+<div class="app-shell">
+<aside class="sidebar" id="sidebar">
+  <a class="brand" href="#dashboard" data-view="dashboard"><span class="brand-mark">M</span><span>musiclink<small>ARTIST WORKSPACE</small></span></a>
+  <div class="workspace-label">WORKSPACE</div>
+  <nav class="side-nav" aria-label="Main navigation">
+    <button class="nav-item active" data-view="dashboard"><span class="nav-icon">◫</span> Overview <kbd>01</kbd></button>
+    <button class="nav-item" data-view="discover"><span class="nav-icon">⌕</span> Discover artists</button>
+    <button class="nav-item" data-view="blindmatch"><span class="nav-icon">◉</span> BlindMatch <span class="nav-dot"></span></button>
+    <button class="nav-item" data-view="projects"><span class="nav-icon">▤</span> Collaborations</button>
+    <button class="nav-item" data-view="studio"><span class="nav-icon">♫</span> Studio workspace</button>
+    <button class="nav-item" data-view="messages"><span class="nav-icon">▱</span> Messages <span class="count-pill" id="message-count">2</span></button>
+    <div class="workspace-label nav-gap">RELEASE & IDENTITY</div>
+    <button class="nav-item" data-view="releases"><span class="nav-icon">◷</span> Release planner</button>
+    <button class="nav-item" data-view="promotion"><span class="nav-icon">⌁</span> Promotion lab</button>
+    <button class="nav-item" data-view="epk"><span class="nav-icon">▧</span> Press kit builder</button>
+    <button class="nav-item" data-view="profile"><span class="nav-icon">◎</span> Artist profile</button>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="storage-card"><div class="storage-top"><span>YOUR WORKSPACE</span><span class="live-dot"></span></div><strong>Build in public.</strong><p>Organize your music journey, one release at a time.</p><div class="storage-line"><i></i></div><small>LOCAL DEMO MODE</small></div>
+    <button class="nav-item" data-view="settings"><span class="nav-icon">⚙</span> Settings</button>
+    <div class="user-chip"><div class="avatar">N</div><div><b id="sidebar-artist">Nova</b><small>Independent artist</small></div><button class="icon-button" data-view="profile" aria-label="Edit profile">•••</button></div>
   </div>
-  <div class="hero-visual reveal delay">
-    <div class="orb orb-a"></div><div class="orb orb-b"></div>
-    <div class="dashboard">
-      <div class="dash-top"><span><i></i><i></i><i></i></span><code>musiclink / blindmatch</code><b>DEMO</b></div>
-      <div class="dash-head"><div><small>PROJECT NEED</small><strong>Find a hook vocalist</strong></div><div class="score">03<span> matches</span></div></div>
-      <div class="progress"><span></span></div>
-      <div class="dash-grid">
-        <div class="dash-item done"><span>01</span><b>Brief match</b><em>ALIGNED</em></div>
-        <div class="dash-item done"><span>02</span><b>Blind review</b><em>OPEN</em></div>
-        <div class="dash-item"><span>03</span><b>Shortlist</b><em>IN REVIEW</em></div>
-        <div class="dash-item"><span>04</span><b>Collab</b><em>NOT STARTED</em></div>
+</aside>
+<main class="main-area">
+  <header class="topbar">
+    <button class="mobile-menu icon-button" id="mobile-menu" aria-label="Open navigation">☰</button>
+    <div class="crumb"><span>Workspace</span><b>/</b><strong id="crumb-current">Overview</strong></div>
+    <div class="topbar-actions"><label class="global-search"><span>⌕</span><input id="global-search" placeholder="Search artists, projects..." aria-label="Search workspace"><kbd>⌘ K</kbd></label><button class="icon-button notification-trigger" id="notifications-button" aria-label="Notifications">♧<i></i></button><button class="top-avatar" data-view="profile" id="top-avatar">N</button></div>
+  </header>
+  <div class="content-wrap">
+    <section class="view active" id="view-dashboard">
+      <div class="welcome-row"><div><div class="eyebrow"><span class="live-dot"></span> YOUR CREATIVE HQ</div><h1>Make something <em>real.</em></h1><p class="muted">Your music projects, collaborators and next moves in one place.</p></div><button class="btn btn-primary" data-action="new-project">＋ Start a project</button></div>
+      <div class="notice-strip"><span class="notice-icon">✳</span><div><b>Meet BlindMatch, your new way to collaborate.</b><p>Review musical fit before public profiles enter the decision.</p></div><button data-view="blindmatch" class="text-action">Explore BlindMatch <span>→</span></button></div>
+      <div class="stats-grid">
+        <article class="stat-card"><div class="stat-label">ACTIVE PROJECTS <span>↗</span></div><div class="stat-value" id="stat-projects">03</div><div class="stat-foot"><span class="status-dot green"></span> Keep momentum going</div><div class="stat-spark spark-one">▂▃▅▃▆▅▇</div></article>
+        <article class="stat-card"><div class="stat-label">COLLABORATORS <span>↗</span></div><div class="stat-value" id="stat-collaborators">08</div><div class="stat-foot">People building with you</div><div class="stat-spark spark-two">▁▃▂▅▄▆▇</div></article>
+        <article class="stat-card"><div class="stat-label">TRACKS IN WORKSPACE <span>↗</span></div><div class="stat-value" id="stat-tracks">12</div><div class="stat-foot">Demos, drafts and releases</div><div class="stat-spark spark-three">▂▅▃▆▃▇▅</div></article>
+        <article class="stat-card"><div class="stat-label">NEXT RELEASE <span>◷</span></div><div class="stat-value stat-date">18<span> NOV</span></div><div class="stat-foot">Set your own release date</div><div class="stat-spark spark-four">▁▂▂▄▅▆▇</div></article>
       </div>
-      <div class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-      <div class="dash-footer"><span>NEXT MILESTONE</span><b>Rate auditions before reveal</b><span class="pulse-status">● READY</span></div>
-    </div>
-    <div class="floating-tag tag-one">RELEASE / 01</div><div class="floating-tag tag-two">ARTIST OS</div>
-  </div>
-</section>
-
-<section class="ticker"><div><span>BLIND AUDITIONS</span><i>✦</i><span>MUSICAL FIT</span><i>✦</i><span>EMERGING ARTISTS</span><i>✦</i><span>COLLABORATION</span><i>✦</i><span>PROJECT PROGRESS</span><i>✦</i></div></section>
-
-<section id="blindmatch" class="section blindmatch-section">
-  <div class="section-head reveal"><div><span class="eyebrow">THE NEW CORE / BLINDMATCH</span><h2>Hear the fit.<br><span>Then meet the artist.</span></h2></div><p>Create a focused project brief, review auditions without public profiles, score the musical fit and reveal shortlisted creators when you are ready. This interactive demo runs in your browser.</p></div>
-  <div class="blind-layout">
-    <form id="project-form" class="bm-panel">
-      <div class="panel-kicker">01 / PROJECT BRIEF</div><h3>What are you missing?</h3>
-      <label class="bm-label" for="project-title">Project name</label><input id="project-title" name="title" value="Sinhala rap hook" required maxlength="80">
-      <div class="bm-fields">
-        <div><label class="bm-label" for="project-role">Needed role</label><select id="project-role" name="role"><option>Hook vocalist</option><option>Beat producer</option><option>Rapper / verse</option><option>Songwriter</option><option>Instrumentalist</option></select></div>
-        <div><label class="bm-label" for="project-language">Language</label><select id="project-language" name="language"><option>Sinhala</option><option>English</option><option>Tamil</option><option>Sinhala / English</option><option>Any language</option></select></div>
-        <div><label class="bm-label" for="project-genre">Genre</label><select id="project-genre" name="genre"><option>Hip hop</option><option>R&B</option><option>Pop</option><option>Electronic</option><option>Alternative</option></select></div>
-        <div><label class="bm-label" for="project-mood">Mood</label><select id="project-mood" name="mood"><option>Dark / atmospheric</option><option>Energetic</option><option>Melodic</option><option>Emotional</option><option>Laid back</option></select></div>
+      <div class="section-row"><div><span class="section-kicker">IN MOTION / 01</span><h2>Your projects</h2></div><button class="text-action" data-view="projects">View all <span>→</span></button></div>
+      <div class="project-grid" id="dashboard-projects"></div>
+      <div class="dashboard-lower">
+        <section class="surface activity-surface"><div class="surface-head"><div><span class="section-kicker">THE LATEST / 02</span><h3>Workspace activity</h3></div><button class="icon-button" id="clear-activity" aria-label="Clear activity">•••</button></div><div id="activity-list" class="activity-list"></div></section>
+        <section class="surface quick-surface"><div class="surface-head"><div><span class="section-kicker">QUICK ACCESS / 03</span><h3>Make your next move</h3></div></div><div class="quick-grid"><button data-view="blindmatch"><span class="quick-icon lime">◉</span><b>Find a collaborator</b><small>Run a blind audition</small><span class="quick-arrow">→</span></button><button data-view="studio"><span class="quick-icon purple">♫</span><b>Open studio</b><small>Organize your demos</small><span class="quick-arrow">→</span></button><button data-view="releases"><span class="quick-icon blue">◷</span><b>Plan a release</b><small>Build your timeline</small><span class="quick-arrow">→</span></button><button data-view="epk"><span class="quick-icon orange">▧</span><b>Build your EPK</b><small>Prepare artist materials</small><span class="quick-arrow">→</span></button></div></section>
       </div>
-      <label class="bm-label" for="project-notes">What should the collaborator deliver?</label><textarea id="project-notes" name="notes" placeholder="Example: a memorable 8 bar hook with a moody melodic delivery." maxlength="500">A memorable 8 bar hook with a moody melodic delivery.</textarea>
-      <button class="generate bm-submit" type="submit">Save project brief <span>↗</span></button>
-      <p class="bm-hint">Demo only. Your brief stays in this browser and is not uploaded to a server.</p>
-    </form>
-    <div class="bm-panel audition-panel">
-      <div class="panel-kicker">02 / BLIND AUDITION ROOM</div>
-      <div class="audition-heading"><div><h3 id="audition-heading">Auditions for your project</h3><p id="audition-subtitle">Review the work before the profile.</p></div><span class="blind-badge"><i></i> PROFILE BLIND</span></div>
-      <div id="audition-list" class="audition-list" aria-live="polite"></div>
-      <form id="audition-form" class="audition-submit-form">
-        <div class="audition-form-head"><b>SUBMIT A DEMO AUDITION</b><span>LOCAL PREVIEW</span></div>
-        <div class="bm-fields">
-          <div><label class="bm-label" for="audition-name">Artist name, hidden in review</label><input id="audition-name" name="artistName" placeholder="Your artist name" required maxlength="60"></div>
-          <div><label class="bm-label" for="audition-language">Language</label><select id="audition-language" name="language"><option>Sinhala</option><option>English</option><option>Tamil</option><option>Sinhala / English</option></select></div>
-          <div><label class="bm-label" for="audition-genre">Genre</label><select id="audition-genre" name="genre"><option>Hip hop</option><option>R&B</option><option>Pop</option><option>Electronic</option><option>Alternative</option></select></div>
-          <div><label class="bm-label" for="audition-mood">Mood</label><select id="audition-mood" name="mood"><option>Dark / atmospheric</option><option>Energetic</option><option>Melodic</option><option>Emotional</option><option>Laid back</option></select></div>
-        </div>
-        <label class="bm-label" for="audition-audio">Short audio demo, optional</label><input id="audition-audio" name="audio" type="file" accept="audio/*">
-        <button class="secondary-action audition-submit" type="submit">Add audition to this demo</button>
-      </form>
-      <div class="bm-actions"><button id="rank-auditions" class="secondary-action" type="button">Rank by fit</button><button id="reveal-shortlist" class="primary-action" type="button">Reveal shortlist</button></div>
-      <p id="blind-status" class="bm-status" role="status">Rate at least one audition to begin your shortlist.</p>
-    </div>
+    </section>
+    <section class="view" id="view-discover">
+      <div class="page-heading"><div><span class="section-kicker">THE CREATOR NETWORK</span><h1>Find your people.</h1><p>Discover artists by sound, skills and the work they want to make.</p></div><button class="btn btn-primary" data-view="blindmatch">Open BlindMatch →</button></div>
+      <div class="filter-bar"><label class="search-field">⌕ <input id="artist-search" placeholder="Search name, genre or skill..."></label><select id="genre-filter"><option value="">All genres</option><option>Hip hop</option><option>R&B</option><option>Pop</option><option>Electronic</option><option>Alternative</option></select><select id="role-filter"><option value="">All roles</option><option>Vocalist</option><option>Producer</option><option>Rapper</option><option>Songwriter</option><option>Instrumentalist</option></select></div>
+      <div id="artist-grid" class="artist-grid"></div>
+      <div class="privacy-note">Demo artist directory. Profiles are sample data until connected to a real backend.</div>
+    </section>
+    <section class="view" id="view-blindmatch">
+      <div class="page-heading"><div><span class="section-kicker">SIGNATURE FEATURE / 01</span><h1>Hear the fit. <em>Then meet.</em></h1><p>Collect anonymous auditions, score musical compatibility and reveal shortlisted creators when you decide.</p></div><span class="feature-badge"><i></i> PROFILE-BLIND REVIEW</span></div>
+      <div class="blind-intro-grid"><div class="surface brief-surface"><div class="surface-head"><div><span class="section-kicker">01 / PROJECT BRIEF</span><h3>What are you missing?</h3></div><span class="step-index">01</span></div><form id="project-form" class="stack-form"><label>Project name<input id="project-title" name="title" value="Midnight melody" maxlength="80" required></label><div class="form-grid"><label>Needed role<select id="project-role" name="role"><option>Hook vocalist</option><option>Beat producer</option><option>Rapper / verse</option><option>Songwriter</option><option>Instrumentalist</option></select></label><label>Language<select id="project-language" name="language"><option>Sinhala</option><option>English</option><option>Tamil</option><option>Sinhala / English</option><option>Any language</option></select></label><label>Genre<select id="project-genre" name="genre"><option>Hip hop</option><option>R&B</option><option>Pop</option><option>Electronic</option><option>Alternative</option></select></label><label>Mood<select id="project-mood" name="mood"><option>Dark / atmospheric</option><option>Energetic</option><option>Melodic</option><option>Emotional</option><option>Laid back</option></select></label></div><label>Creative brief<textarea id="project-notes" name="notes" rows="3" maxlength="500" placeholder="Describe the sound and deliverables">An atmospheric hook with a memorable melody and emotional delivery.</textarea></label><button class="btn btn-primary full-width" type="submit">Save project brief <span>→</span></button><p class="form-hint">This demo saves project details in this browser only.</p></form></div>
+      <div class="surface audition-surface"><div class="surface-head"><div><span class="section-kicker">02 / BLIND AUDITION ROOM</span><h3 id="audition-heading">Auditions for Midnight melody</h3><p id="audition-subtitle">Review the work before the profile.</p></div><span class="privacy-pill">◉ BLIND MODE</span></div><div class="audition-summary"><div><strong id="audition-total">03</strong><small>SUBMISSIONS</small></div><div><strong id="rated-total">00</strong><small>RATED</small></div><div><strong id="shortlist-total">00</strong><small>SHORTLISTED</small></div></div><div id="audition-list" class="audition-list"></div><form id="audition-form" class="submit-audition"><div class="form-section-title">SUBMIT A DEMO AUDITION <span>LOCAL PREVIEW</span></div><div class="form-grid"><label>Artist name (hidden in review)<input name="artistName" id="audition-name" placeholder="Your artist name" maxlength="60" required></label><label>Role<select name="role"><option>Hook vocalist</option><option>Beat producer</option><option>Rapper / verse</option><option>Songwriter</option><option>Instrumentalist</option></select></label><label>Language<select name="language"><option>Sinhala</option><option>English</option><option>Tamil</option><option>Sinhala / English</option></select></label><label>Genre<select name="genre"><option>Hip hop</option><option>R&B</option><option>Pop</option><option>Electronic</option><option>Alternative</option></select></label></div><label>Audio demo (optional)<input id="audition-audio" name="audio" type="file" accept="audio/*"></label><button class="btn btn-secondary full-width" type="submit">＋ Add audition to demo</button></form><div class="button-row"><button id="rank-auditions" class="btn btn-secondary" type="button">Rank by fit</button><button id="reveal-shortlist" class="btn btn-primary" type="button">Reveal shortlist</button></div><p id="blind-status" class="status-message" role="status">Rate an audition to begin your shortlist.</p></div></div>
+      <div class="section-row"><div><span class="section-kicker">03 / TRANSPARENT BY DESIGN</span><h2>What goes into a match?</h2></div></div><div class="match-logic-grid"><article class="logic-card"><span class="logic-number">30%</span><h3>Brief alignment</h3><p>Role and mood compatibility, plus a baseline fit indicator.</p><div class="logic-track"><i style="width:30%"></i></div></article><article class="logic-card"><span class="logic-number">25%</span><h3>Language fit</h3><p>Whether the creator can work in the requested language.</p><div class="logic-track"><i style="width:25%"></i></div></article><article class="logic-card"><span class="logic-number">20%</span><h3>Genre fit</h3><p>How closely the artist's genre matches the project brief.</p><div class="logic-track"><i style="width:20%"></i></div></article><article class="logic-card"><span class="logic-number">25%</span><h3>Human rating</h3><p>Your listening-based rating remains visible in the score.</p><div class="logic-track"><i style="width:25%"></i></div></article></div>
+      <div class="privacy-note">Important: browser-only demo. Hiding names in the interface is not secure anonymity. Production BlindMatch needs server-side permissions, private media URLs and authenticated users.</div>
+    </section>
+    <section class="view" id="view-projects">
+      <div class="page-heading"><div><span class="section-kicker">MAKE IT TOGETHER</span><h1>Collaboration board.</h1><p>Keep every project, next step and handoff visible.</p></div><button class="btn btn-primary" data-action="new-project">＋ New project</button></div>
+      <div class="project-toolbar"><div class="filter-tabs" id="project-tabs"><button class="selected" data-filter="all">All projects</button><button data-filter="active">In progress</button><button data-filter="review">Needs review</button><button data-filter="completed">Completed</button></div><span id="project-count-label" class="muted small-text">3 projects</span></div><div id="all-projects" class="project-list"></div>
+    </section>
+    <section class="view" id="view-studio">
+      <div class="page-heading"><div><span class="section-kicker">YOUR CREATIVE DESK</span><h1>Studio workspace.</h1><p>Organize drafts, notes, deliverables and the small details behind a finished track.</p></div><button class="btn btn-primary" data-action="add-track">＋ Add track</button></div>
+      <div class="studio-layout"><div class="surface track-surface"><div class="surface-head"><div><span class="section-kicker">YOUR TRACKS</span><h3>Project library</h3></div><select id="track-filter"><option value="all">All tracks</option><option value="demo">Demo</option><option value="in progress">In progress</option><option value="ready">Ready</option></select></div><div id="track-list" class="track-list"></div></div><div class="surface checklist-surface"><div class="surface-head"><div><span class="section-kicker">SESSION HYGIENE</span><h3>Studio checklist</h3></div><span class="step-index">07</span></div><div id="studio-checklist" class="checklist"></div><div class="check-progress"><div><span id="check-progress-label">0 of 7 complete</span><b id="check-progress-percent">0%</b></div><div class="progress-track"><i id="check-progress-bar"></i></div></div></div></div>
+      <div class="surface upload-surface"><div class="upload-copy"><span class="section-kicker">ADD A DEMO</span><h3>Keep the idea moving.</h3><p>Add a track title and optional local audio preview. Files are not uploaded or saved permanently.</p></div><form id="track-form" class="track-form"><label>Track title<input name="title" placeholder="Untitled demo" required maxlength="80"></label><label>Version<select name="status"><option>demo</option><option>in progress</option><option>ready</option></select></label><label>Audio file<input type="file" id="track-audio" accept="audio/*"></label><button class="btn btn-secondary" type="submit">Add to library</button></form></div>
+    </section>
+    <section class="view" id="view-messages">
+      <div class="page-heading"><div><span class="section-kicker">KEEP THE SESSION MOVING</span><h1>Messages.</h1><p>Demo conversations for coordinating your next collaboration.</p></div></div>
+      <div class="messages-layout"><div class="surface conversation-list"><div class="surface-head"><h3>Inbox</h3><span class="privacy-pill">DEMO</span></div><div id="conversation-items"></div></div><div class="surface chat-surface"><div class="chat-head" id="chat-head"></div><div class="chat-history" id="chat-history"></div><form id="message-form" class="message-form"><input id="message-input" placeholder="Write a message..." maxlength="500" required><button class="btn btn-primary" type="submit">Send ↑</button></form><p class="form-hint">Messages stay in this browser. No messages are sent to other users.</p></div></div>
+    </section>
+    <section class="view" id="view-releases">
+      <div class="page-heading"><div><span class="section-kicker">FROM FINISH TO RELEASE DAY</span><h1>Release planner.</h1><p>Build a practical timeline for your next single, EP or project.</p></div><button class="btn btn-primary" data-action="new-release">＋ Plan a release</button></div>
+      <div class="release-layout"><div class="surface release-form-surface"><div class="surface-head"><div><span class="section-kicker">RELEASE DETAILS</span><h3>Set your target</h3></div></div><form id="release-form" class="stack-form"><label>Artist name<input name="artist" id="release-artist" value="Nova" required></label><label>Release title<input name="title" placeholder="Track or project name" required></label><div class="form-grid"><label>Release type<select name="type"><option>Single</option><option>EP</option><option>Album</option><option>Music video</option></select></label><label>Release date<input name="date" type="date" required></label></div><button class="btn btn-primary full-width" type="submit">Generate timeline →</button></form></div><div class="surface release-plan-surface"><div class="surface-head"><div><span class="section-kicker">YOUR TIMELINE</span><h3 id="release-plan-title">Release checklist</h3></div><span class="privacy-pill">EDITABLE</span></div><div id="release-timeline" class="release-timeline"><div class="empty-state">Add a release to generate a timeline.</div></div></div></div><div class="surface saved-releases"><div class="surface-head"><div><span class="section-kicker">UPCOMING & SAVED</span><h3>Your release calendar</h3></div></div><div id="release-list"></div></div>
+    </section>
+    <section class="view" id="view-promotion">
+      <div class="page-heading"><div><span class="section-kicker">MAKE EVERY POST COUNT</span><h1>Promotion lab.</h1><p>Turn a release into a week of consistent content without overthinking it.</p></div></div><div class="promotion-layout"><div class="surface promotion-form-surface"><div class="surface-head"><div><span class="section-kicker">CAMPAIGN INPUT</span><h3>Build a campaign</h3></div></div><form id="promotion-form" class="stack-form"><label>Release title<input name="title" placeholder="Name of your release" required></label><div class="form-grid"><label>Genre<select name="genre"><option>Hip hop</option><option>R&B</option><option>Pop</option><option>Electronic</option><option>Alternative</option></select></label><label>Main platform<select name="platform"><option>TikTok</option><option>Instagram</option><option>YouTube</option><option>All platforms</option></select></label></div><label>Campaign mood<select name="mood"><option>Mysterious</option><option>Personal story</option><option>High energy</option><option>Behind the scenes</option></select></label><button class="btn btn-primary full-width" type="submit">Generate 7-day plan →</button></form></div><div class="surface campaign-surface"><div class="surface-head"><div><span class="section-kicker">YOUR CONTENT CALENDAR</span><h3 id="campaign-title">Seven days of momentum</h3></div></div><div id="campaign-list" class="campaign-list"><div class="empty-state">Build a campaign to see your content plan.</div></div></div></div>
+    </section>
+    <section class="view" id="view-epk">
+      <div class="page-heading"><div><span class="section-kicker">YOUR STORY, CLEARLY TOLD</span><h1>Press kit builder.</h1><p>Generate a clean artist bio and EPK outline from your real details.</p></div><button class="btn btn-secondary" data-action="copy-epk">Copy generated text</button></div><div class="epk-layout"><form id="epk-form" class="surface stack-form"><div class="surface-head"><h3>Artist details</h3></div><label>Artist / project name<input name="name" id="epk-name" value="Nova" required></label><div class="form-grid"><label>Genre<input name="genre" value="Hip hop"></label><label>Based in<input name="location" value="Sri Lanka"></label></div><label>Sound and influences<textarea name="sound" rows="3" placeholder="Describe your sound...">Atmospheric hip hop with melodic hooks and introspective writing.</textarea></label><label>Career highlights<textarea name="highlights" rows="3" placeholder="Releases, performances, milestones"></textarea></label><label>Official links<textarea name="links" rows="2" placeholder="Website, streaming and social links"></textarea></label><button class="btn btn-primary full-width" type="submit">Generate EPK copy →</button></form><div class="surface epk-preview"><div class="epk-cover"><span class="section-kicker">ELECTRONIC PRESS KIT</span><div class="epk-monogram" id="epk-monogram">N.</div><div><h2 id="epk-preview-name">Nova</h2><p id="epk-preview-meta">HIP HOP · SRI LANKA</p></div></div><div class="epk-copy" id="epk-copy"><div class="empty-state">Fill in your details to generate a bio.</div></div></div></div>
+    </section>
+    <section class="view" id="view-profile">
+      <div class="page-heading"><div><span class="section-kicker">YOUR ARTIST IDENTITY</span><h1>Make it yours.</h1><p>Your profile is how collaborators understand your sound and working style.</p></div><button class="btn btn-primary" data-action="save-profile">Save profile</button></div><div class="profile-layout"><div class="surface profile-preview"><div class="profile-banner"><div class="profile-avatar-large" id="profile-avatar-large">N</div><span class="privacy-pill">ARTIST PROFILE</span></div><div class="profile-preview-body"><div class="profile-name-row"><div><h2 id="profile-preview-name">Nova</h2><p id="profile-preview-location">Independent artist · Sri Lanka</p></div><span class="profile-online"><i></i> Open to collab</span></div><p id="profile-preview-bio">Building atmospheric hip hop and finding the right people to make ideas real.</p><div class="tag-list" id="profile-preview-tags"><span>Hip hop</span><span>Songwriting</span><span>Vocals</span></div><div class="profile-links" id="profile-preview-links"></div></div></div><form id="profile-form" class="surface stack-form"><div class="surface-head"><div><span class="section-kicker">PROFILE SETTINGS</span><h3>Artist details</h3></div></div><label>Artist name<input name="name" id="profile-name" value="Nova" required maxlength="60"></label><div class="form-grid"><label>Location<input name="location" id="profile-location" value="Sri Lanka" maxlength="80"></label><label>Primary genre<select name="genre" id="profile-genre"><option>Hip hop</option><option>R&B</option><option>Pop</option><option>Electronic</option><option>Alternative</option></select></label></div><label>Short bio<textarea name="bio" id="profile-bio" rows="4" maxlength="400">Building atmospheric hip hop and finding the right people to make ideas real.</textarea></label><label>Skills (comma separated)<input name="skills" id="profile-skills" value="Songwriting, Vocals, Recording"></label><label>Links (comma separated)<input name="links" id="profile-links" placeholder="https://..., https://..."></label><label class="checkbox-row"><input name="open" id="profile-open" type="checkbox" checked> Open to collaboration</label><button class="btn btn-primary full-width" type="submit">Save profile changes</button></form></div>
+    </section>
+    <section class="view" id="view-settings">
+      <div class="page-heading"><div><span class="section-kicker">CONTROL YOUR SPACE</span><h1>Settings.</h1><p>Manage your local demo data and workspace preferences.</p></div></div><div class="settings-grid"><article class="surface settings-card"><span class="section-kicker">WORKSPACE</span><h3>Demo environment</h3><p>This version runs entirely in your browser. No account, server database or private cloud storage is connected.</p><div class="setting-row"><div><b>Save demo data locally</b><small>Projects, profile, ratings and checklists use this browser.</small></div><span class="setting-state">ENABLED</span></div></article><article class="surface settings-card"><span class="section-kicker">DATA CONTROL</span><h3>Reset workspace</h3><p>Clear your local MusicLink demo data and return to the sample workspace.</p><button id="reset-demo" class="btn btn-danger">Reset demo data</button></article><article class="surface settings-card"><span class="section-kicker">PRODUCT ROADMAP</span><h3>Production requirements</h3><ul class="roadmap-list"><li>Account registration and secure sessions</li><li>Server-side role permissions and blind review</li><li>Private audio storage and upload validation</li><li>Real-time messages and notifications</li><li>Database backups, moderation and reporting</li></ul></article></div>
+    </section>
+    <section class="view" id="view-notifications"><div class="page-heading"><div><span class="section-kicker">WHAT'S MOVING</span><h1>Notifications.</h1><p>Activity and reminders from your demo workspace.</p></div><button class="btn btn-secondary" id="mark-notifications">Mark all read</button></div><div class="surface notification-list" id="notification-list"></div></section>
+    <footer class="app-footer"><span><b>musiclink</b> · independent artist workspace</span><span>BUILT FOR THE WORK BEHIND THE MUSIC</span></footer>
   </div>
-  <div class="bm-bottom-grid">
-    <article class="bm-mini-card"><span>03 / MATCH LOGIC</span><h3>Explainable scoring</h3><p>Brief fit, language, genre and your audition rating form a transparent compatibility score.</p></article>
-    <article class="bm-mini-card"><span>04 / AFTER SELECTION</span><h3>Project progress</h3><p>Move a collaboration through selected, in progress, revision requested, approved and completed.</p></article>
-    <article class="bm-mini-card"><span>05 / DESIGN PRINCIPLE</span><h3>Popularity comes later</h3><p>Public profiles and follower counts stay out of the first review screen. Blind review does not guarantee identity anonymity.</p></article>
-  </div>
-</section>
-
-<section id="tools" class="section tools-section">
-  <div class="section-head reveal"><div><span class="eyebrow">THE TOOLKIT / 06</span><h2>Support the work.<br><span>Finish the release.</span></h2></div><p>Keep the existing release, studio and artist tools alongside BlindMatch while the full account and media backend is developed.</p></div>
-  <div class="tool-grid">
-    <article class="tool-card featured reveal" data-tool="release"><div class="card-top"><span>01 / RELEASE</span><b>↗</b></div><div class="card-icon">◒</div><h3>Release Planner</h3><p>Build a launch timeline from master delivery to release day.</p><button>Open planner <span>→</span></button></article>
-    <article class="tool-card reveal" data-tool="epk"><div class="card-top"><span>02 / IDENTITY</span><b>↗</b></div><div class="card-icon">◫</div><h3>EPK Builder</h3><p>Shape the essential information for a clean electronic press kit.</p><button>Build EPK <span>→</span></button></article>
-    <article class="tool-card reveal" data-tool="promotion"><div class="card-top"><span>03 / PROMO</span><b>↗</b></div><div class="card-icon">⌁</div><h3>Promotion Planner</h3><p>Turn one release into seven focused content actions.</p><button>Plan promotion <span>→</span></button></article>
-    <article class="tool-card reveal" data-tool="studio"><div class="card-top"><span>04 / STUDIO</span><b>↗</b></div><div class="card-icon">◉</div><h3>Studio Checklist</h3><p>Keep takes, exports, credits and session files under control.</p><button>Open checklist <span>→</span></button></article>
-    <article class="tool-card reveal" data-tool="collab"><div class="card-top"><span>05 / COLLAB</span><b>↗</b></div><div class="card-icon">⌘</div><h3>Collaboration</h3><p>Track roles, splits, ownership, artwork and approvals.</p><button>Open checklist <span>→</span></button></article>
-    <article class="tool-card reveal" data-tool="profile"><div class="card-top"><span>06 / PROFILE</span><b>↗</b></div><div class="card-icon">◎</div><h3>Artist Profile</h3><p>Generate a clean starting bio from your sound and story.</p><button>Create profile <span>→</span></button></article>
-  </div>
-</section>
-
-<section id="workflow" class="workflow">
-  <div class="workflow-inner">
-    <div class="reveal"><span class="eyebrow">THE FLOW / 01—04</span><h2>From blind audition<br>to <span>real collaboration.</span></h2><p>MusicLink separates first-stage listening from profile signals, then gives selected creators a clear path to finish the project.</p></div>
-    <div class="steps">
-      <div class="flow-step reveal"><span>01</span><div><b>DEFINE</b><p>Describe the missing role, sound, language and deliverable.</p></div></div>
-      <div class="flow-step reveal"><span>02</span><div><b>AUDITION</b><p>Collect audio submissions and review them without public profiles.</p></div></div>
-      <div class="flow-step reveal"><span>03</span><div><b>SHORTLIST</b><p>Rate musical fit, compare transparent scores and reveal selected profiles.</p></div></div>
-      <div class="flow-step reveal"><span>04</span><div><b>COMPLETE</b><p>Track revisions, approvals and the final collaboration status.</p></div></div>
-    </div>
-  </div>
-</section>
-
-<section class="manifesto"><div class="manifesto-mark">ML</div><span class="eyebrow">WHY IT EXISTS</span><h2>Independent music has enough moving parts.</h2><p>MusicLink helps independent artists evaluate musical fit first, then move selected collaborations through a clear process. The prototype is a starting point for a full stack HNDSE project.</p></section>
-
-<section id="about" class="about section">
-  <div class="reveal"><span class="eyebrow">BUILT FROM TWO WORLDS</span><h2>Software engineering <span>×</span> music.</h2></div>
-  <div class="about-copy reveal"><p>MusicLink is a browser prototype for blind auditions, transparent compatibility scoring and independent music workflows. The current demo uses local browser state and does not yet provide real accounts or server-side storage.</p><div class="specs"><span><b>FRONTEND</b> HTML / CSS / JS</span><span><b>PROTOTYPE</b> Browser state</span><span><b>BACKEND</b> Planned: Express + MongoDB</span><span><b>HOSTING</b> GitHub Pages demo</span></div></div>
-</section>
 </main>
-
-<footer><div><b>MusicLink<span class="accent">.</span></b><p>Blind auditions and tools for independent musicians.</p></div><div class="footer-right"><span>BUILT BY NOVA</span><span>SOFTWARE ENGINEERING × MUSIC</span></div></footer>
-
-<div id="modal" class="modal" aria-hidden="true"><div class="box"><button id="close" aria-label="Close">×</button><div id="content"></div></div></div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="modal-backdrop" id="modal" aria-hidden="true"><section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button class="modal-close" id="modal-close" aria-label="Close">×</button><div id="modal-content"></div></section></div>
 <script src="script.js"></script>
-</body>
-</html>
+</body></html>
