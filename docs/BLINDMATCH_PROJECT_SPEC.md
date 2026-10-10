@@ -222,3 +222,37 @@ Use consenting participants and disclose the prototype's limitations. With a sma
 - Collaboration status transitions reject invalid changes.
 - Critical workflows pass documented functional and API tests.
 - The report includes real test results and an honest limitations section.
+
+
+## 13. Expanded product workspace
+
+The interface has been expanded beyond BlindMatch into a unified artist workspace. The local prototype includes:
+
+- Overview dashboard with project status, workspace activity and quick actions.
+- Artist discovery with search and genre/role filters.
+- BlindMatch audition review and profile reveal.
+- Collaboration board with status, next milestone and progress editing.
+- Studio track library, optional temporary audio previews and session checklist.
+- Local demo conversations and outgoing message drafts.
+- Release planner with a generated seven-step milestone timeline.
+- Promotion lab with a seven-day campaign checklist.
+- Press kit copy generator.
+- Artist profile editor, notifications and local settings/reset.
+
+These are front-end prototype workflows. Sample directory data and messages are not connected to other users; browser-local state is not shared across devices.
+
+## 14. Production readiness boundary
+
+The current interface must not be described as a deployed multi-user platform. Before production, implement and test authentication, server-side authorization, validated file uploads, private audio storage, rate limits, moderation/reporting, durable database persistence, backups, privacy controls and message access rules. Blind review must be enforced by the API, not merely by hiding profile fields in the browser. Consider voice identifiability when describing the feature as profile-blind.
+
+## 15. Recommended implementation order
+
+1. Define user stories and MongoDB schemas for users, artist profiles, projects, auditions, ratings, collaborations, tracks, releases, conversations, messages and notifications.
+2. Implement authentication and ownership-based authorization.
+3. Implement project CRUD and server-side audition submissions.
+4. Store audio privately and expose it only to authorized project participants.
+5. Implement explainable scoring as a tested service, keeping owner ratings separate from system-derived fit.
+6. Add collaboration status transitions, comments and release/studio tools.
+7. Add messages and notification state.
+8. Test responsive browser workflows, API permissions, validation, failure states and accessibility.
+9. Conduct a small user evaluation comparing first-stage profile-blind review with profile-visible review. Report sample size, method, limitations and results honestly.
