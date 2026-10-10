@@ -69,6 +69,17 @@
       <div class="panel-kicker">02 / BLIND AUDITION ROOM</div>
       <div class="audition-heading"><div><h3 id="audition-heading">Auditions for your project</h3><p id="audition-subtitle">Review the work before the profile.</p></div><span class="blind-badge"><i></i> PROFILE BLIND</span></div>
       <div id="audition-list" class="audition-list" aria-live="polite"></div>
+      <form id="audition-form" class="audition-submit-form">
+        <div class="audition-form-head"><b>SUBMIT A DEMO AUDITION</b><span>LOCAL PREVIEW</span></div>
+        <div class="bm-fields">
+          <div><label class="bm-label" for="audition-name">Artist name, hidden in review</label><input id="audition-name" name="artistName" placeholder="Your artist name" required maxlength="60"></div>
+          <div><label class="bm-label" for="audition-language">Language</label><select id="audition-language" name="language"><option>Sinhala</option><option>English</option><option>Tamil</option><option>Sinhala / English</option></select></div>
+          <div><label class="bm-label" for="audition-genre">Genre</label><select id="audition-genre" name="genre"><option>Hip hop</option><option>R&B</option><option>Pop</option><option>Electronic</option><option>Alternative</option></select></div>
+          <div><label class="bm-label" for="audition-mood">Mood</label><select id="audition-mood" name="mood"><option>Dark / atmospheric</option><option>Energetic</option><option>Melodic</option><option>Emotional</option><option>Laid back</option></select></div>
+        </div>
+        <label class="bm-label" for="audition-audio">Short audio demo, optional</label><input id="audition-audio" name="audio" type="file" accept="audio/*">
+        <button class="secondary-action audition-submit" type="submit">Add audition to this demo</button>
+      </form>
       <div class="bm-actions"><button id="rank-auditions" class="secondary-action" type="button">Rank by fit</button><button id="reveal-shortlist" class="primary-action" type="button">Reveal shortlist</button></div>
       <p id="blind-status" class="bm-status" role="status">Rate at least one audition to begin your shortlist.</p>
     </div>
