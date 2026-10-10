@@ -50,3 +50,9 @@
 .bm-mini-card p{font-size:12px;line-height:1.75;color:#858c97;margin:0}
 @media(max-width:900px){.blind-layout{grid-template-columns:1fr}.bm-bottom-grid{grid-template-columns:1fr 1fr}.blindmatch-section{padding-top:85px}}
 @media(max-width:560px){.bm-panel,.audition-panel{padding:20px}.bm-fields{grid-template-columns:1fr}.bm-bottom-grid{grid-template-columns:1fr}.audition-card{grid-template-columns:1fr}.audition-side{flex-direction:row;align-items:center;justify-content:space-between}.blind-badge{font-size:7px}.bm-actions button{flex:1}.audition-heading{flex-direction:column}}
+
+.audition-submit-form{margin-top:22px;padding:16px;border:1px dashed #343d47;border-radius:11px;background:#0b0e12}
+.audition-form-head{display:flex;justify-content:space-between;gap:10px;align-items:center;color:#cbd1c9;font:9px 'DM Mono',monospace;letter-spacing:.7px}
+.audition-form-head span{color:#77818d;font-size:8px}
+.audition-submit{margin-top:14px;width:100%}
+.bm-panel input[type=file]{font-size:10px;color:#8e97a2;padding:9px}
