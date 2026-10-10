@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="MusicLink is a free browser-based toolkit for independent musicians.">
+<meta name="description" content="MusicLink BlindMatch helps independent musicians find collaborators through blind auditions, compatibility scoring and structured project workflows.">
 <meta name="theme-color" content="#07080a">
-<title>MusicLink | Independent Music Toolkit</title>
+<title>MusicLink | BlindMatch for Independent Artists</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -16,23 +16,23 @@
 <div class="cursor-glow"></div>
 <header class="site-header">
   <a class="logo" href="#top"><span class="logo-mark">M</span><span>MusicLink</span></a>
-  <nav><a href="#tools">Tools</a><a href="#workflow">Workflow</a><a href="#about">About</a><a class="header-cta" href="#tools">Start free <span>↘</span></a></nav>
+  <nav><a href="#blindmatch">BlindMatch</a><a href="#tools">Tools</a><a href="#workflow">Workflow</a><a href="#about">About</a><a class="header-cta" href="#blindmatch">Try demo <span>↘</span></a></nav>
 </header>
 
 <main id="top">
 <section class="hero">
   <div class="hero-copy reveal">
-    <div class="eyebrow"><span class="live-dot"></span> FREE MUSIC WORKSPACE <span class="eyebrow-line"></span> 0 API REQUIRED</div>
-    <h1>Your music.<br><span class="outline">Your workflow.</span><br>Your <em>link.</em></h1>
-    <p class="hero-lead">A focused browser toolkit for independent artists. Plan releases, build artist copy, organize studio work and turn ideas into repeatable workflows.</p>
-    <div class="hero-actions"><a class="primary" href="#tools">Explore toolkit <span>↘</span></a><a class="text-link" href="#about">Why MusicLink</a></div>
-    <div class="hero-meta"><span><b>06</b> tools</span><span><b>100%</b> browser</span><span><b>0</b> backend</span></div>
+    <div class="eyebrow"><span class="live-dot"></span> BLIND AUDITIONS <span class="eyebrow-line"></span> BUILT FOR INDIE MUSIC</div>
+    <h1>Find your<br><span class="outline">next sound.</span><br>Make it <em>real.</em></h1>
+    <p class="hero-lead">Turn unfinished musical ideas into real collaborations. MusicLink BlindMatch lets artists audition for a specific role before public profiles and popularity signals enter the decision.</p>
+    <div class="hero-actions"><a class="primary" href="#blindmatch">Try BlindMatch <span>↘</span></a><a class="text-link" href="#about">How it works</a></div>
+    <div class="hero-meta"><span><b>01</b> blind audition flow</span><span><b>04</b> match signals</span><span><b>0</b> paid AI APIs</span></div>
   </div>
   <div class="hero-visual reveal delay">
     <div class="orb orb-a"></div><div class="orb orb-b"></div>
     <div class="dashboard">
-      <div class="dash-top"><span><i></i><i></i><i></i></span><code>musiclink / release-os</code><b>LIVE</b></div>
-      <div class="dash-head"><div><small>RELEASE READINESS</small><strong>New single</strong></div><div class="score">72<span>%</span></div></div>
+      <div class="dash-top"><span><i></i><i></i><i></i></span><code>musiclink / blindmatch</code><b>DEMO</b></div>
+      <div class="dash-head"><div><small>PROJECT NEED</small><strong>Find a hook vocalist</strong></div><div class="score">03<span> matches</span></div></div>
       <div class="progress"><span></span></div>
       <div class="dash-grid">
         <div class="dash-item done"><span>01</span><b>Master</b><em>READY</em></div>
@@ -41,16 +41,47 @@
         <div class="dash-item"><span>04</span><b>Promotion</b><em>TODO</em></div>
       </div>
       <div class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-      <div class="dash-footer"><span>NEXT MILESTONE</span><b>Prepare release campaign</b><span class="pulse-status">● ON TRACK</span></div>
+      <div class="dash-footer"><span>NEXT MILESTONE</span><b>Rate auditions before reveal</b><span class="pulse-status">● READY</span></div>
     </div>
     <div class="floating-tag tag-one">RELEASE / 01</div><div class="floating-tag tag-two">ARTIST OS</div>
   </div>
 </section>
 
-<section class="ticker"><div><span>INDEPENDENT ARTISTS</span><i>✦</i><span>RELEASES</span><i>✦</i><span>EPK</span><i>✦</i><span>PROMOTION</span><i>✦</i><span>STUDIO</span><i>✦</i><span>COLLABS</span><i>✦</i></div></section>
+<section class="ticker"><div><span>BLIND AUDITIONS</span><i>✦</i><span>MUSICAL FIT</span><i>✦</i><span>EMERGING ARTISTS</span><i>✦</i><span>COLLABORATION</span><i>✦</i><span>PROJECT PROGRESS</span><i>✦</i></div></section>
+
+<section id="blindmatch" class="section blindmatch-section">
+  <div class="section-head reveal"><div><span class="eyebrow">THE NEW CORE / BLINDMATCH</span><h2>Hear the fit.<br><span>Then meet the artist.</span></h2></div><p>Create a focused project brief, review auditions without public profiles, score the musical fit and reveal shortlisted creators when you are ready. This interactive demo runs in your browser.</p></div>
+  <div class="blind-layout">
+    <form id="project-form" class="bm-panel">
+      <div class="panel-kicker">01 / PROJECT BRIEF</div><h3>What are you missing?</h3>
+      <label class="bm-label" for="project-title">Project name</label><input id="project-title" name="title" value="Sinhala rap hook" required maxlength="80">
+      <div class="bm-fields">
+        <div><label class="bm-label" for="project-role">Needed role</label><select id="project-role" name="role"><option>Hook vocalist</option><option>Beat producer</option><option>Rapper / verse</option><option>Songwriter</option><option>Instrumentalist</option></select></div>
+        <div><label class="bm-label" for="project-language">Language</label><select id="project-language" name="language"><option>Sinhala</option><option>English</option><option>Tamil</option><option>Sinhala / English</option><option>Any language</option></select></div>
+        <div><label class="bm-label" for="project-genre">Genre</label><select id="project-genre" name="genre"><option>Hip hop</option><option>R&B</option><option>Pop</option><option>Electronic</option><option>Alternative</option></select></div>
+        <div><label class="bm-label" for="project-mood">Mood</label><select id="project-mood" name="mood"><option>Dark / atmospheric</option><option>Energetic</option><option>Melodic</option><option>Emotional</option><option>Laid back</option></select></div>
+      </div>
+      <label class="bm-label" for="project-notes">What should the collaborator deliver?</label><textarea id="project-notes" name="notes" placeholder="Example: a memorable 8 bar hook with a moody melodic delivery." maxlength="500">A memorable 8 bar hook with a moody melodic delivery.</textarea>
+      <button class="generate bm-submit" type="submit">Save project brief <span>↗</span></button>
+      <p class="bm-hint">Demo only. Your brief stays in this browser and is not uploaded to a server.</p>
+    </form>
+    <div class="bm-panel audition-panel">
+      <div class="panel-kicker">02 / BLIND AUDITION ROOM</div>
+      <div class="audition-heading"><div><h3 id="audition-heading">Auditions for your project</h3><p id="audition-subtitle">Review the work before the profile.</p></div><span class="blind-badge"><i></i> PROFILE BLIND</span></div>
+      <div id="audition-list" class="audition-list" aria-live="polite"></div>
+      <div class="bm-actions"><button id="rank-auditions" class="secondary-action" type="button">Rank by fit</button><button id="reveal-shortlist" class="primary-action" type="button">Reveal shortlist</button></div>
+      <p id="blind-status" class="bm-status" role="status">Rate at least one audition to begin your shortlist.</p>
+    </div>
+  </div>
+  <div class="bm-bottom-grid">
+    <article class="bm-mini-card"><span>03 / MATCH LOGIC</span><h3>Explainable scoring</h3><p>Brief fit, language, genre and your audition rating form a transparent compatibility score.</p></article>
+    <article class="bm-mini-card"><span>04 / AFTER SELECTION</span><h3>Project progress</h3><p>Move a collaboration through selected, in progress, revision requested, approved and completed.</p></article>
+    <article class="bm-mini-card"><span>05 / DESIGN PRINCIPLE</span><h3>Popularity comes later</h3><p>Public profiles and follower counts stay out of the first review screen. Blind review does not guarantee identity anonymity.</p></article>
+  </div>
+</section>
 
 <section id="tools" class="section tools-section">
-  <div class="section-head reveal"><div><span class="eyebrow">THE TOOLKIT / 06</span><h2>Less admin.<br><span>More momentum.</span></h2></div><p>Small tools built around the real tasks behind an independent release. Everything runs in your browser.</p></div>
+  <div class="section-head reveal"><div><span class="eyebrow">THE TOOLKIT / 06</span><h2>Support the work.<br><span>Finish the release.</span></h2></div><p>Keep the existing release, studio and artist tools alongside BlindMatch while the full account and media backend is developed.</p></div>
   <div class="tool-grid">
     <article class="tool-card featured reveal" data-tool="release"><div class="card-top"><span>01 / RELEASE</span><b>↗</b></div><div class="card-icon">◒</div><h3>Release Planner</h3><p>Build a launch timeline from master delivery to release day.</p><button>Open planner <span>→</span></button></article>
     <article class="tool-card reveal" data-tool="epk"><div class="card-top"><span>02 / IDENTITY</span><b>↗</b></div><div class="card-icon">◫</div><h3>EPK Builder</h3><p>Shape the essential information for a clean electronic press kit.</p><button>Build EPK <span>→</span></button></article>
@@ -73,15 +104,15 @@
   </div>
 </section>
 
-<section class="manifesto"><div class="manifesto-mark">ML</div><span class="eyebrow">WHY IT EXISTS</span><h2>Independent music has enough moving parts.</h2><p>MusicLink keeps the practical side visible in one place, so the software supports the creative process instead of becoming another thing to manage.</p></section>
+<section class="manifesto"><div class="manifesto-mark">ML</div><span class="eyebrow">WHY IT EXISTS</span><h2>Independent music has enough moving parts.</h2><p>MusicLink helps independent artists evaluate musical fit first, then move selected collaborations through a clear process. The prototype is a starting point for a full stack HNDSE project.</p></section>
 
 <section id="about" class="about section">
   <div class="reveal"><span class="eyebrow">BUILT FROM TWO WORLDS</span><h2>Software engineering <span>×</span> music.</h2></div>
-  <div class="about-copy reveal"><p>MusicLink is a zero-cost browser project exploring how lightweight software tools fit into the independent music workflow.</p><div class="specs"><span><b>FRONTEND</b> HTML / CSS / JS</span><span><b>RUNTIME</b> Browser only</span><span><b>MODEL</b> No API required</span><span><b>HOSTING</b> GitHub Pages</span></div></div>
+  <div class="about-copy reveal"><p>MusicLink is a browser prototype for blind auditions, transparent compatibility scoring and independent music workflows. The current demo uses local browser state and does not yet provide real accounts or server-side storage.</p><div class="specs"><span><b>FRONTEND</b> HTML / CSS / JS</span><span><b>PROTOTYPE</b> Browser state</span><span><b>BACKEND</b> Planned: Express + MongoDB</span><span><b>HOSTING</b> GitHub Pages demo</span></div></div>
 </section>
 </main>
 
-<footer><div><b>MusicLink<span class="accent">.</span></b><p>A free toolkit for independent musicians.</p></div><div class="footer-right"><span>BUILT BY NOVA</span><span>SOFTWARE ENGINEERING × MUSIC</span></div></footer>
+<footer><div><b>MusicLink<span class="accent">.</span></b><p>Blind auditions and tools for independent musicians.</p></div><div class="footer-right"><span>BUILT BY NOVA</span><span>SOFTWARE ENGINEERING × MUSIC</span></div></footer>
 
 <div id="modal" class="modal" aria-hidden="true"><div class="box"><button id="close" aria-label="Close">×</button><div id="content"></div></div></div>
 <script src="script.js"></script>
