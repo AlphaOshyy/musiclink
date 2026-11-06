@@ -64,6 +64,10 @@ const mine = async id => await User.findById(id).select("-passwordHash");
 const tokenFor = u => jwt.sign({ id:String(u._id), role:u.role }, SECRET, { expiresIn:"7d" });
 
 app.get("/api/health",(_,res)=>res.json({ok:true,service:"musiclink-api"}));
+app.get("/api/health/db",asyncRoute(async(_,res)=>{
+  const result=await mongoose.connection.db.admin().ping();
+  res.json({ok:result.ok===1,database:"reachable"});
+}));
 app.post("/api/auth/register",asyncRoute(async(req,res)=>{
   const {email,password,displayName}=req.body;
   if(typeof email!=="string"||!/^\S+@\S+\.\S+$/.test(email)||typeof password!=="string"||password.length<8||password.length>128||typeof displayName!=="string"||displayName.trim().length<2) return sendError(res,400,"Provide a valid name, email, and password with at least 8 characters.");
