@@ -1,0 +1,52 @@
+import mongoose from "mongoose";
+
+const { Schema, model } = mongoose;
+const opts = { timestamps: true };
+const str = { type: String, trim: true };
+const tags = () => [{ type: String, trim: true }];
+
+const User = model("User", new Schema({
+  email: { type: String, unique: true, lowercase: true, required: true, trim: true },
+  passwordHash: { type: String, required: true },
+  displayName: { type: String, required: true, trim: true },
+  role: { type: String, enum: ["creator", "admin"], default: "creator" },
+  genres: tags(), skills: tags(), creativeTags: tags(),
+  profession: { type: String, default: "Artist" },
+  bio: { type: String, default: "", maxlength: 1500 },
+  available: { type: Boolean, default: true },
+  preferredRoles: tags(), preferredGenres: tags(), preferredTags: tags(),
+  portfolio: [{
+    title: { type: String, required: true },
+    url: { type: String, required: true },
+    genres: tags(), tags: tags()
+  }],
+  followerCount: { type: Number, default: 0, min: 0 }
+}, opts));
+
+const Project = model("Project", new Schema({
+  owner: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+  title: { ...str, required: true, maxlength: 120 },
+  description: { type: String, maxlength: 2000, default: "" },
+  requiredRoles: tags(), requiredSkills: tags(), genres: tags(), creativeTags: tags(),
+  targetDate: { type: Date, default: null },
+  status: { type: String, enum: ["open", "closed"], default: "open" },
+  shortlist: [{ type: Schema.Types.ObjectId, ref: "User" }]
+}, opts));
+
+const Application = model("Application", new Schema({
+  project: { type: Schema.Types.ObjectId, ref: "Project", required: true, index: true },
+  creator: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  note: { type: String, default: "", maxlength: 600 },
+  status: { type: String, enum: ["pending", "accepted", "rejected"], default: "pending" }
+}, opts));
+Application.schema.index({ project: 1, creator: 1 }, { unique: true });
+
+const Invitation = model("Invitation", new Schema({
+  project: { type: Schema.Types.ObjectId, ref: "Project", required: true },
+  sender: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  receiver: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  status: { type: String, enum: ["pending", "accepted", "declined"], default: "pending" }
+}, opts));
+Invitation.schema.index({ project: 1, receiver: 1 }, { unique: true });
+
+export { User, Project, Application, Invitation };

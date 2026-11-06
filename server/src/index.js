@@ -1,0 +1,224 @@
+import "dotenv/config";
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
+import { User, Project, Application, Invitation } from "./models.js";
+
+const app = express();
+app.use(helmet());
+app.use(cors({ origin: process.env.CLIENT_ORIGIN || "http://localhost:5173" }));
+app.use(express.json({ limit: "128kb" }));
+app.use("/api/auth", rateLimit({ windowMs: 15 * 60 * 1000, limit: 25, standardHeaders: "draft-7", legacyHeaders: false }));
+const SECRET = process.env.JWT_SECRET;
+if (!SECRET || SECRET.length < 24 || SECRET.includes("replace-this")) throw new Error("Set a secure JWT_SECRET of at least 24 characters in server/.env");
+const asyncRoute = fn => (req,res,next) => Promise.resolve(fn(req,res,next)).catch(next);
+const idOk = value => mongoose.isValidObjectId(value);
+const cleanTags = value => Array.isArray(value) ? [...new Set(value.filter(v => typeof v === "string").map(v => v.trim().slice(0,48)).filter(Boolean))].slice(0,20) : [];
+const sendError = (res, code, message) => res.status(code).json({ error: message });
+const publicProfile = user => ({
+  id: String(user._id), displayName:user.displayName, profession:user.profession,
+  genres:user.genres, skills:user.skills, creativeTags:user.creativeTags,
+  available:user.available, bio:user.bio, portfolio:user.portfolio,
+  preferredRoles:user.preferredRoles, preferredGenres:user.preferredGenres, preferredTags:user.preferredTags
+});
+function auth(req,res,next) {
+  const token = (req.headers.authorization || "").replace(/^Bearer\s+/i, "");
+  try { req.auth = jwt.verify(token, SECRET); next(); }
+  catch { sendError(res,401,"Please log in."); }
+}
+const mine = async id => await User.findById(id).select("-passwordHash");
+const tokenFor = u => jwt.sign({ id:String(u._id), role:u.role }, SECRET, { expiresIn:"7d" });
+
+app.get("/api/health",(_,res)=>res.json({ok:true,service:"musiclink-api"}));
+app.post("/api/auth/register",asyncRoute(async(req,res)=>{
+  const {email,password,displayName}=req.body;
+  if(typeof email!=="string"||!/^\S+@\S+\.\S+$/.test(email)||typeof password!=="string"||password.length<8||password.length>128||typeof displayName!=="string"||displayName.trim().length<2) return sendError(res,400,"Provide a valid name, email, and password with at least 8 characters.");
+  if(await User.exists({email:email.toLowerCase().trim()})) return sendError(res,409,"Email already registered.");
+  const user=await User.create({email:email.toLowerCase().trim(),passwordHash:await bcrypt.hash(password,12),displayName:displayName.trim().slice(0,80)});
+  res.status(201).json({token:tokenFor(user),user:publicProfile(user)});
+}));
+app.post("/api/auth/login",asyncRoute(async(req,res)=>{
+  const email=String(req.body.email||"").toLowerCase().trim();
+  const user=await User.findOne({email});
+  if(!user||typeof req.body.password!=="string"||!await bcrypt.compare(req.body.password,user.passwordHash)) return sendError(res,401,"Invalid email or password.");
+  res.json({token:tokenFor(user),user:publicProfile(user)});
+}));
+app.get("/api/me",auth,asyncRoute(async(req,res)=>{
+  const user=await mine(req.auth.id);
+  if(!user)return sendError(res,401,"Account unavailable.");
+  res.json(publicProfile(user));
+}));
+app.put("/api/me",auth,asyncRoute(async(req,res)=>{
+  const allowed=["displayName","profession","bio","available","genres","skills","creativeTags","preferredRoles","preferredGenres","preferredTags"];
+  const update={};
+  for(const field of allowed) if(Object.prototype.hasOwnProperty.call(req.body,field)){
+    if(["genres","skills","creativeTags","preferredRoles","preferredGenres","preferredTags"].includes(field))update[field]=cleanTags(req.body[field]);
+    else if(field==="available") update[field]=Boolean(req.body[field]);
+    else if(typeof req.body[field]==="string")update[field]=req.body[field].trim().slice(0,field==="bio"?1500:80);
+  }
+  const user=await User.findByIdAndUpdate(req.auth.id,{$set:update},{new:true,runValidators:true});
+  res.json(publicProfile(user));
+}));
+app.post("/api/me/portfolio",auth,asyncRoute(async(req,res)=>{
+  const {title,url}=req.body;
+  if(typeof title!=="string"||!title.trim()||typeof url!=="string"||!/^https?:\/\//i.test(url))return sendError(res,400,"Provide a title and http(s) URL.");
+  const user=await User.findById(req.auth.id);
+  if(user.portfolio.length>=25)return sendError(res,400,"Maximum 25 portfolio items.");
+  user.portfolio.push({title:title.trim().slice(0,100),url:url.slice(0,500),genres:cleanTags(req.body.genres),tags:cleanTags(req.body.tags)});
+  await user.save();
+  res.status(201).json(publicProfile(user));
+}));
+app.delete("/api/me/portfolio/:id",auth,asyncRoute(async(req,res)=>{
+  const user=await User.findById(req.auth.id);
+  const item=user.portfolio.id(req.params.id);
+  if(!item)return sendError(res,404,"Portfolio item not found.");
+  item.deleteOne();await user.save();res.json(publicProfile(user));
+}));
+app.get("/api/creators",auth,asyncRoute(async(req,res)=>{
+  const users=await User.find({_id:{$ne:req.auth.id}}).limit(50).select("-passwordHash -email -followerCount");
+  res.json(users.map(publicProfile));
+}));
+app.post("/api/projects",auth,asyncRoute(async(req,res)=>{
+  if(typeof req.body.title!=="string"||!req.body.title.trim())return sendError(res,400,"Project title is required.");
+  const project=await Project.create({
+    owner:req.auth.id,title:req.body.title.trim().slice(0,120),
+    description:typeof req.body.description==="string"?req.body.description.slice(0,2000):"",
+    requiredRoles:cleanTags(req.body.requiredRoles),
+    requiredSkills:cleanTags(req.body.requiredSkills),
+    genres:cleanTags(req.body.genres),
+    creativeTags:cleanTags(req.body.creativeTags),
+    targetDate:req.body.targetDate||null
+  });
+  res.status(201).json(project);
+}));
+app.get("/api/projects",auth,asyncRoute(async(req,res)=>{
+  const projects=await Project.find().sort({createdAt:-1}).limit(100).populate("owner","displayName profession");
+  res.json(projects);
+}));
+app.get("/api/projects/:id",auth,asyncRoute(async(req,res)=>{
+  if(!idOk(req.params.id))return sendError(res,400,"Invalid project.");
+  const project=await Project.findById(req.params.id).populate("owner","displayName profession");
+  if(!project)return sendError(res,404,"Project not found.");
+  res.json(project);
+}));
+app.patch("/api/projects/:id",auth,asyncRoute(async(req,res)=>{
+  if(!idOk(req.params.id))return sendError(res,400,"Invalid project.");
+  const project=await Project.findById(req.params.id);
+  if(!project)return sendError(res,404,"Project not found.");
+  if(String(project.owner)!==req.auth.id)return sendError(res,403,"Only the owner may edit a project.");
+  const update={};
+  for(const field of ["title","description","status","genres","creativeTags","requiredRoles","requiredSkills","targetDate"])if(req.body[field]!==undefined){
+    if(["genres","creativeTags","requiredRoles","requiredSkills"].includes(field)) update[field]=cleanTags(req.body[field]);
+    else update[field]=req.body[field];
+  }
+  Object.assign(project,update);await project.save();res.json(project);
+}));
+app.post("/api/projects/:id/apply",auth,asyncRoute(async(req,res)=>{
+  if(!idOk(req.params.id))return sendError(res,400,"Invalid project.");
+  const project=await Project.findById(req.params.id);
+  if(!project||project.status!=="open")return sendError(res,404,"Open project not found.");
+  if(String(project.owner)===req.auth.id)return sendError(res,400,"Owner cannot apply.");
+  const existing=await Application.findOne({project:project._id,creator:req.auth.id});
+  if(existing)return sendError(res,409,"Already applied.");
+  const application=await Application.create({project:project._id,creator:req.auth.id,note:String(req.body.note||"").slice(0,600)});
+  res.status(201).json(application);
+}));
+app.get("/api/projects/:id/applications",auth,asyncRoute(async(req,res)=>{
+  if(!idOk(req.params.id))return sendError(res,400,"Invalid project.");
+  const project=await Project.findById(req.params.id);
+  if(!project||String(project.owner)!==req.auth.id)return sendError(res,403,"Only the owner may view applications.");
+  const apps=await Application.find({project:project._id}).populate("creator","displayName profession genres skills");
+  res.json(apps);
+}));
+app.patch("/api/applications/:id",auth,asyncRoute(async(req,res)=>{
+  if(!idOk(req.params.id))return sendError(res,400,"Invalid application.");
+  const application=await Application.findById(req.params.id).populate("project");
+  if(!application)return sendError(res,404,"Application not found.");
+  if(String(application.project.owner)!==req.auth.id)return sendError(res,403,"Only the owner may review applications.");
+  if(!["accepted","rejected"].includes(req.body.status))return sendError(res,400,"Invalid status.");
+  application.status=req.body.status;await application.save();res.json(application);
+}));
+app.get("/api/invitations",auth,asyncRoute(async(req,res)=>{
+  const invites=await Invitation.find({receiver:req.auth.id}).populate("project","title").populate("sender","displayName");
+  res.json(invites);
+}));
+app.post("/api/projects/:id/invite",auth,asyncRoute(async(req,res)=>{
+  if(!idOk(req.params.id)||!idOk(req.body.receiverId))return sendError(res,400,"Invalid IDs.");
+  const project=await Project.findById(req.params.id);
+  if(!project||String(project.owner)!==req.auth.id)return sendError(res,403,"Only the owner may invite.");
+  if(!project.shortlist.some(id=>String(id)===req.body.receiverId))return sendError(res,403,"Shortlist the candidate first.");
+  const invite=await Invitation.findOneAndUpdate({project:project._id,receiver:req.body.receiverId},{$setOnInsert:{sender:req.auth.id,status:"pending"}},{upsert:true,new:true,setDefaultsOnInsert:true});
+  res.status(201).json(invite);
+}));
+app.patch("/api/invitations/:id",auth,asyncRoute(async(req,res)=>{
+  if(!idOk(req.params.id))return sendError(res,400,"Invalid invitation.");
+  const invite=await Invitation.findById(req.params.id);
+  if(!invite||String(invite.receiver)!==req.auth.id)return sendError(res,403,"Invitation unavailable.");
+  if(!["accepted","declined"].includes(req.body.status))return sendError(res,400,"Invalid status.");
+  invite.status=req.body.status;await invite.save();res.json(invite);
+}));
+const recoURL=(process.env.RECOMMENDER_URL||"http://localhost:8000").replace(/\/$/,"");
+async function match(project,candidates,owner){
+  const response=await fetch(recoURL+"/rank",{method:"POST",headers:{"content-type":"application/json"},
+   body:JSON.stringify({project:{
+     genres:project.genres,requiredSkills:project.requiredSkills,requiredRoles:project.requiredRoles,
+     creativeTags:project.creativeTags,ownerPreferences:{roles:owner.preferredRoles,genres:owner.preferredGenres,tags:owner.preferredTags}
+   },candidates:candidates.map(u=>({
+     id:String(u._id),profession:u.profession,genres:u.genres,skills:u.skills,
+     creativeTags:u.creativeTags,available:u.available,
+     portfolio:u.portfolio.map(p=>({genres:p.genres,tags:p.tags})),
+     preferredRoles:u.preferredRoles,preferredGenres:u.preferredGenres,preferredTags:u.preferredTags
+   }))})
+  });
+  if(!response.ok)throw new Error("Recommendation service unavailable");
+  return await response.json();
+}
+app.get("/api/projects/:id/recommendations",auth,asyncRoute(async(req,res)=>{
+  if(!idOk(req.params.id))return sendError(res,400,"Invalid project.");
+  const project=await Project.findById(req.params.id);
+  if(!project||String(project.owner)!==req.auth.id)return sendError(res,403,"Only the project owner may view recommendations.");
+  const owner=await User.findById(req.auth.id);
+  const candidates=await User.find({_id:{$ne:req.auth.id}}).limit(500);
+  const result=await match(project,candidates,owner);
+  const blind=req.query.mode!=="visible";
+  const byId=new Map(candidates.map(u=>[String(u._id),u]));
+  const ranked=result.ranked.map((item,i)=>{
+    const user=byId.get(item.id);
+    const shortlisted=project.shortlist.some(id=>String(id)===item.id);
+    const showIdentity=!blind||shortlisted;
+    const identity=showIdentity?{id:item.id,displayName:user.displayName,profession:user.profession,portfolio:user.portfolio.map(x=>({title:x.title,url:x.url}))}:{anonymousRef:"Candidate "+String(i+1).padStart(2,"0"),profession:user.profession};
+    const matchToken=showIdentity?item.id:jwt.sign({candidateId:item.id,projectId:String(project._id),purpose:"shortlist"},SECRET,{expiresIn:"1h"});
+    return { ...identity,matchId:matchToken,shortlisted,score:item.score,forward:item.forward,reverse:item.reverse,factors:item.factors,explanation:item.explanation,baseline:item.baseline,
+      genres:user.genres,skills:user.skills,creativeTags:user.creativeTags,available:user.available };
+  });
+  res.json({mode:blind?"blind":"visible",weights:result.weights,ranked});
+}));
+app.post("/api/projects/:id/shortlist",auth,asyncRoute(async(req,res)=>{
+  if(!idOk(req.params.id)||typeof req.body.candidateId!=="string")return sendError(res,400,"Invalid IDs.");
+  const project=await Project.findById(req.params.id);
+  if(!project||String(project.owner)!==req.auth.id)return sendError(res,403,"Only the owner may shortlist.");
+  let candidateId=req.body.candidateId;
+  if(!idOk(candidateId)){
+    try{
+      const payload=jwt.verify(candidateId,SECRET);
+      if(payload.purpose!=="shortlist"||payload.projectId!==String(project._id))return sendError(res,400,"Invalid candidate token.");
+      candidateId=payload.candidateId;
+    }catch{return sendError(res,400,"Invalid or expired candidate token.");}
+  }
+  if(String(project.owner)===candidateId||!await User.exists({_id:candidateId}))return sendError(res,400,"Invalid candidate.");
+  if(!project.shortlist.some(id=>String(id)===candidateId))project.shortlist.push(candidateId);
+  await project.save();res.json({shortlist:project.shortlist});
+}));
+app.use((err,req,res,next)=>{
+  console.error(err);
+  if(err.name==="ValidationError"||err.name==="CastError")return sendError(res,400,"Invalid submitted data.");
+  if(err.code===11000)return sendError(res,409,"Record already exists.");
+  sendError(res,500,"Server error.");
+});
+const port=Number(process.env.PORT||4000);
+await mongoose.connect(process.env.MONGO_URI||"mongodb://127.0.0.1:27017/musiclink");
+app.listen(port,()=>console.log("MusicLink API running on port "+port));
