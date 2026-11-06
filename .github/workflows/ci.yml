@@ -1,0 +1,46 @@
+name: MusicLink checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  api:
+    name: Node API syntax
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install
+        working-directory: server
+      - run: node --check src/index.js
+        working-directory: server
+      - run: node --check src/models.js
+        working-directory: server
+
+  frontend:
+    name: React build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install
+        working-directory: client
+      - run: npm run build
+        working-directory: client
+
+  recommender:
+    name: MCCA unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+        working-directory: recommender
+      - run: pytest -q
+        working-directory: recommender

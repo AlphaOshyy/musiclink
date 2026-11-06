@@ -1,0 +1,32 @@
+# Render Blueprint for the MusicLink development deployment.
+# This creates two independent web services on the free plan.
+# Configure secrets in Render. Never put database passwords in this file.
+services:
+  - type: web
+    name: musiclink-api
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CLIENT_ORIGIN
+        sync: false
+      - key: RECOMMENDER_URL
+        sync: false
+
+  - type: web
+    name: musiclink-recommender
+    runtime: python
+    plan: free
+    rootDir: recommender
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
