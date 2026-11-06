@@ -8,11 +8,22 @@ import jwt from "jsonwebtoken";
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 import mongoose from "mongoose";
 import { User, Project, Application, Invitation } from "./models.js";
+import { rank } from "./matcher.js";
 
 const app = express();
 app.use(helmet());
 app.use(cors({ origin: process.env.CLIENT_ORIGIN || "http://localhost:5173" }));
 app.use(express.json({ limit: "128kb" }));
+let connectPromise;
+const connectDB=()=>{
+  if(mongoose.connection.readyState===1)return Promise.resolve();
+  if(!connectPromise)connectPromise=mongoose.connect(process.env.MONGO_URI||"mongodb://127.0.0.1:27017/musiclink").catch(e=>{connectPromise=null;throw e;});
+  return connectPromise;
+};
+app.use("/api",async(req,res,next)=>{
+  if(req.path==="/health")return next();
+  try{await connectDB();next();}catch(e){next(e);}
+});
 app.use("/api/auth", rateLimit({ windowMs: 15 * 60 * 1000, limit: 25, standardHeaders: "draft-7", legacyHeaders: false }));
 const SECRET = process.env.JWT_SECRET;
 if (!SECRET || SECRET.length < 24 || SECRET.includes("replace-this")) throw new Error("Set a secure JWT_SECRET of at least 24 characters in server/.env");
@@ -180,29 +191,13 @@ app.patch("/api/invitations/:id",auth,asyncRoute(async(req,res)=>{
   if(!["accepted","declined"].includes(req.body.status))return sendError(res,400,"Invalid status.");
   invite.status=req.body.status;await invite.save();res.json(invite);
 }));
-const recoURL=(process.env.RECOMMENDER_URL||"http://localhost:8000").replace(/\/$/,"");
-async function match(project,candidates,owner){
-  const response=await fetch(recoURL+"/rank",{method:"POST",headers:{"content-type":"application/json"},
-   body:JSON.stringify({project:{
-     genres:project.genres,requiredSkills:project.requiredSkills,requiredRoles:project.requiredRoles,
-     creativeTags:project.creativeTags,ownerPreferences:{roles:owner.preferredRoles,genres:owner.preferredGenres,tags:owner.preferredTags}
-   },candidates:candidates.map(u=>({
-     id:String(u._id),profession:u.profession,genres:u.genres,skills:u.skills,
-     creativeTags:u.creativeTags,available:u.available,
-     portfolio:u.portfolio.map(p=>({genres:p.genres,tags:p.tags})),
-     preferredRoles:u.preferredRoles,preferredGenres:u.preferredGenres,preferredTags:u.preferredTags
-   }))})
-  });
-  if(!response.ok)throw new Error("Recommendation service unavailable");
-  return await response.json();
-}
 app.get("/api/projects/:id/recommendations",auth,asyncRoute(async(req,res)=>{
   if(!idOk(req.params.id))return sendError(res,400,"Invalid project.");
   const project=await Project.findById(req.params.id);
   if(!project||String(project.owner)!==req.auth.id)return sendError(res,403,"Only the project owner may view recommendations.");
   const owner=await User.findById(req.auth.id);
   const candidates=await User.find({_id:{$ne:req.auth.id}}).limit(500);
-  const result=await match(project,candidates,owner);
+  const result=rank({...project.toObject(),ownerPreferences:{roles:owner.preferredRoles,genres:owner.preferredGenres,tags:owner.preferredTags}},candidates);
   const blind=req.query.mode!=="visible";
   const byId=new Map(candidates.map(u=>[String(u._id),u]));
   const ranked=result.ranked.map((item,i)=>{
@@ -239,5 +234,8 @@ app.use((err,req,res,next)=>{
   sendError(res,500,"Server error.");
 });
 const port=Number(process.env.PORT||4000);
-await mongoose.connect(process.env.MONGO_URI||"mongodb://127.0.0.1:27017/musiclink");
-app.listen(port,()=>console.log("MusicLink API running on port "+port));
+if(process.env.VERCEL!=="1"){
+  await connectDB();
+  app.listen(port,()=>console.log("MusicLink API running on port "+port));
+}
+export default app;
