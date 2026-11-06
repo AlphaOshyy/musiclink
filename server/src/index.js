@@ -5,6 +5,7 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 import mongoose from "mongoose";
 import { User, Project, Application, Invitation } from "./models.js";
 
@@ -19,6 +20,24 @@ const asyncRoute = fn => (req,res,next) => Promise.resolve(fn(req,res,next)).cat
 const idOk = value => mongoose.isValidObjectId(value);
 const cleanTags = value => Array.isArray(value) ? [...new Set(value.filter(v => typeof v === "string").map(v => v.trim().slice(0,48)).filter(Boolean))].slice(0,20) : [];
 const sendError = (res, code, message) => res.status(code).json({ error: message });
+
+const blindKey = createHash("sha256").update(SECRET).digest();
+function sealCandidate(candidateId, projectId) {
+  const iv = randomBytes(12);
+  const cipher = createCipheriv("aes-256-gcm", blindKey, iv);
+  const payload = JSON.stringify({candidateId, projectId, expires:Date.now()+3600000});
+  const encrypted = Buffer.concat([cipher.update(payload,"utf8"),cipher.final()]);
+  return Buffer.concat([iv,cipher.getAuthTag(),encrypted]).toString("base64url");
+}
+function unsealCandidate(token) {
+  const bytes = Buffer.from(token, "base64url");
+  if(bytes.length<29)throw Error("Invalid token");
+  const decipher=createDecipheriv("aes-256-gcm",blindKey,bytes.subarray(0,12));
+  decipher.setAuthTag(bytes.subarray(12,28));
+  const payload=JSON.parse(Buffer.concat([decipher.update(bytes.subarray(28)),decipher.final()]).toString("utf8"));
+  if(payload.expires<Date.now())throw Error("Expired token");
+  return payload;
+}
 const publicProfile = user => ({
   id: String(user._id), displayName:user.displayName, profession:user.profession,
   genres:user.genres, skills:user.skills, creativeTags:user.creativeTags,
@@ -191,7 +210,7 @@ app.get("/api/projects/:id/recommendations",auth,asyncRoute(async(req,res)=>{
     const shortlisted=project.shortlist.some(id=>String(id)===item.id);
     const showIdentity=!blind||shortlisted;
     const identity=showIdentity?{id:item.id,displayName:user.displayName,profession:user.profession,portfolio:user.portfolio.map(x=>({title:x.title,url:x.url}))}:{anonymousRef:"Candidate "+String(i+1).padStart(2,"0"),profession:user.profession};
-    const matchToken=showIdentity?item.id:jwt.sign({candidateId:item.id,projectId:String(project._id),purpose:"shortlist"},SECRET,{expiresIn:"1h"});
+    const matchToken=showIdentity?item.id:sealCandidate(item.id,String(project._id));
     return { ...identity,matchId:matchToken,shortlisted,score:item.score,forward:item.forward,reverse:item.reverse,factors:item.factors,explanation:item.explanation,baseline:item.baseline,
       genres:user.genres,skills:user.skills,creativeTags:user.creativeTags,available:user.available };
   });
@@ -204,8 +223,8 @@ app.post("/api/projects/:id/shortlist",auth,asyncRoute(async(req,res)=>{
   let candidateId=req.body.candidateId;
   if(!idOk(candidateId)){
     try{
-      const payload=jwt.verify(candidateId,SECRET);
-      if(payload.purpose!=="shortlist"||payload.projectId!==String(project._id))return sendError(res,400,"Invalid candidate token.");
+      const payload=unsealCandidate(candidateId);
+      if(payload.projectId!==String(project._id))return sendError(res,400,"Invalid candidate token.");
       candidateId=payload.candidateId;
     }catch{return sendError(res,400,"Invalid or expired candidate token.");}
   }
