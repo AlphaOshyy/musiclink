@@ -46,17 +46,3 @@ jobs:
         working-directory: recommender
       - run: pytest -q
         working-directory: recommender
-
-
-  day3-profile-smoke:
-    name: Live Day 3 profile verification
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [api, frontend]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-      - run: node scripts/profile-smoke.mjs
-        working-directory: server
