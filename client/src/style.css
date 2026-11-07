@@ -75,3 +75,21 @@ body,.workspace{background:var(--bg)}
 .message.error{background:#f8ebe8;color:#9f392f}.message.success{background:#edf4ea;color:#4d7657}
 @media(max-width:950px){.project-grid,.creators-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:650px){.project-grid,.creators-grid{grid-template-columns:1fr}.page-heading h1{font-size:39px}.sidebar{background:#19231d}.sidebar-brand .wordmark{color:#fff}.auth-pane{padding-top:40px}}
+
+/* Contrast repair: photographic authentication panel must always use light text. */
+.auth-visual{color:#fff!important;background:#101b16}
+.auth-visual .auth-top,.auth-visual .auth-feature{color:#fff!important}
+.auth-visual .auth-brand,.auth-visual .auth-brand .wordmark,.auth-visual .auth-brand .wordmark>span:first-child{color:#f9f8f1!important}
+.auth-visual .auth-feature h1,.auth-visual .auth-feature h1:not(em){color:#fff!important;text-shadow:0 2px 18px rgba(0,0,0,.32)}
+.auth-visual .auth-feature h1 em{color:#f2bea0!important;text-shadow:0 2px 15px rgba(0,0,0,.35)}
+.auth-visual .light-kicker,.auth-visual .editorial-no,.auth-visual .auth-visual-bottom{color:#faf5eb!important}
+.auth-visual .auth-feature>p{color:#f0f1e9!important}
+.auth-visual .auth-shade{background:linear-gradient(90deg,rgba(10,19,13,.78) 0%,rgba(10,19,13,.40) 100%),linear-gradient(0deg,rgba(7,16,11,.77),transparent 85%)}
+.auth-visual .auth-feature h1{font-size:clamp(53px,5.6vw,90px);line-height:1.08;letter-spacing:-.07em}
+.auth-visual .auth-top{padding-top:38px}
+.auth-visual .auth-brand .wordmark{font-size:31px}
+.auth-pane .auth-box .eyebrow{color:#975237}
+@media(max-width:650px){
+ .auth-visual .auth-feature h1{font-size:clamp(41px,10vw,56px)}
+ .auth-visual .auth-top{padding-top:20px}
+}
