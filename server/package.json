@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
-    "test": "node --test src/matcher.test.js",
+    "test": "node --test src/*.test.js",
     "test:auth": "node scripts/auth-smoke.mjs"
   },
   "dependencies": {

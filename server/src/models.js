@@ -8,7 +8,8 @@ const tags = () => [{ type: String, trim: true }];
 const User = model("User", new Schema({
   email: { type: String, unique: true, lowercase: true, required: true, trim: true },
   passwordHash: { type: String, required: true },
-  displayName: { type: String, required: true, trim: true },
+  displayName: { type: String, required: true, trim: true, minlength: 2, maxlength: 80 },
+  avatarUrl: { type: String, default: "", maxlength: 500 },
   role: { type: String, enum: ["creator", "admin"], default: "creator" },
   genres: tags(), skills: tags(), creativeTags: tags(),
   profession: { type: String, default: "Artist" },

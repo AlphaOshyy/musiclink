@@ -93,3 +93,7 @@ body,.workspace{background:var(--bg)}
  .auth-visual .auth-feature h1{font-size:clamp(41px,10vw,56px)}
  .auth-visual .auth-top{padding-top:20px}
 }
+
+.creator-avatar img,.creator-detail-avatar img,.profile-avatar img{display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit}
+.creator-avatar,.creator-detail-avatar,.profile-avatar{overflow:hidden}
+.profile-progress{display:inline-flex;border:1px solid #cbd8cb;padding:7px 10px;color:#517657;font-size:10px;font-weight:800;letter-spacing:.08em;margin-bottom:16px}

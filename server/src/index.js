@@ -9,6 +9,7 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:
 import mongoose from "mongoose";
 import { User, Project, Application, Invitation } from "./models.js";
 import { rank } from "./matcher.js";
+import { publicProfile, validateProfile, validatePortfolio, creatorSearch } from "./profile.js";
 
 const app = express();
 app.use(helmet());
@@ -51,12 +52,6 @@ function unsealCandidate(token) {
   if(payload.expires<Date.now())throw Error("Expired token");
   return payload;
 }
-const publicProfile = user => ({
-  id: String(user._id), displayName:user.displayName, profession:user.profession,
-  genres:user.genres, skills:user.skills, creativeTags:user.creativeTags,
-  available:user.available, bio:user.bio, portfolio:user.portfolio,
-  preferredRoles:user.preferredRoles, preferredGenres:user.preferredGenres, preferredTags:user.preferredTags
-});
 function auth(req,res,next) {
   const token = (req.headers.authorization || "").replace(/^Bearer\s+/i, "");
   try { req.auth = jwt.verify(token, SECRET, { issuer:"musiclink", audience:"musiclink-web", algorithms:["HS256"] }); next(); }
@@ -90,35 +85,54 @@ app.get("/api/me",auth,asyncRoute(async(req,res)=>{
   if(!user)return sendError(res,401,"Account unavailable.");
   res.json(publicProfile(user));
 }));
+
 app.put("/api/me",auth,asyncRoute(async(req,res)=>{
-  const allowed=["displayName","profession","bio","available","genres","skills","creativeTags","preferredRoles","preferredGenres","preferredTags"];
-  const update={};
-  for(const field of allowed) if(Object.prototype.hasOwnProperty.call(req.body,field)){
-    if(["genres","skills","creativeTags","preferredRoles","preferredGenres","preferredTags"].includes(field))update[field]=cleanTags(req.body[field]);
-    else if(field==="available") update[field]=Boolean(req.body[field]);
-    else if(typeof req.body[field]==="string")update[field]=req.body[field].trim().slice(0,field==="bio"?1500:80);
-  }
-  const user=await User.findByIdAndUpdate(req.auth.id,{$set:update},{new:true,runValidators:true});
-  res.json(publicProfile(user));
+ const parsed=validateProfile(req.body);
+ if(parsed.error)return sendError(res,400,parsed.error);
+ const user=await User.findByIdAndUpdate(req.auth.id,{$set:parsed.update},{new:true,runValidators:true});
+ if(!user)return sendError(res,401,"Account unavailable.");
+ res.setHeader("Cache-Control","no-store");res.json(publicProfile(user));
 }));
 app.post("/api/me/portfolio",auth,asyncRoute(async(req,res)=>{
-  const {title,url}=req.body;
-  if(typeof title!=="string"||!title.trim()||typeof url!=="string"||!/^https?:\/\//i.test(url))return sendError(res,400,"Provide a title and http(s) URL.");
-  const user=await User.findById(req.auth.id);
-  if(user.portfolio.length>=25)return sendError(res,400,"Maximum 25 portfolio items.");
-  user.portfolio.push({title:title.trim().slice(0,100),url:url.slice(0,500),genres:cleanTags(req.body.genres),tags:cleanTags(req.body.tags)});
-  await user.save();
-  res.status(201).json(publicProfile(user));
+ const parsed=validatePortfolio(req.body);
+ if(parsed.error)return sendError(res,400,parsed.error);
+ const user=await User.findById(req.auth.id);
+ if(!user)return sendError(res,401,"Account unavailable.");
+ if(user.portfolio.length>=25)return sendError(res,400,"Maximum 25 samples.");
+ user.portfolio.push(parsed.item);await user.save();res.status(201).json(publicProfile(user));
+}));
+app.patch("/api/me/portfolio/:id",auth,asyncRoute(async(req,res)=>{
+ if(!idOk(req.params.id))return sendError(res,400,"Invalid sample ID.");
+ const parsed=validatePortfolio(req.body);
+ if(parsed.error)return sendError(res,400,parsed.error);
+ const user=await User.findById(req.auth.id);
+ if(!user)return sendError(res,401,"Account unavailable.");
+ const item=user.portfolio.id(req.params.id);
+ if(!item)return sendError(res,404,"Sample not found.");
+ Object.assign(item,parsed.item);await user.save();res.json(publicProfile(user));
 }));
 app.delete("/api/me/portfolio/:id",auth,asyncRoute(async(req,res)=>{
-  const user=await User.findById(req.auth.id);
-  const item=user.portfolio.id(req.params.id);
-  if(!item)return sendError(res,404,"Portfolio item not found.");
-  item.deleteOne();await user.save();res.json(publicProfile(user));
+ if(!idOk(req.params.id))return sendError(res,400,"Invalid sample ID.");
+ const user=await User.findById(req.auth.id);
+ if(!user)return sendError(res,401,"Account unavailable.");
+ const item=user.portfolio.id(req.params.id);
+ if(!item)return sendError(res,404,"Sample not found.");
+ item.deleteOne();await user.save();res.json(publicProfile(user));
 }));
 app.get("/api/creators",auth,asyncRoute(async(req,res)=>{
-  const users=await User.find({_id:{$ne:req.auth.id}}).limit(50).select("-passwordHash -email -followerCount");
-  res.json(users.map(publicProfile));
+ const parsed=creatorSearch(req.query);
+ if(parsed.error)return sendError(res,400,parsed.error);
+ const users=await User.find({...parsed.filter,_id:{$ne:req.auth.id}})
+   .sort({createdAt:-1,_id:-1}).skip((parsed.page-1)*parsed.limit).limit(parsed.limit)
+   .select("displayName profession avatarUrl genres skills creativeTags available bio portfolio preferredRoles preferredGenres preferredTags");
+ res.setHeader("Cache-Control","private, no-store");res.json(users.map(publicProfile));
+}));
+app.get("/api/creators/:id",auth,asyncRoute(async(req,res)=>{
+ if(!idOk(req.params.id))return sendError(res,400,"Invalid creator ID.");
+ const user=await User.findById(req.params.id)
+  .select("displayName profession avatarUrl genres skills creativeTags available bio portfolio preferredRoles preferredGenres preferredTags");
+ if(!user)return sendError(res,404,"Creator not found.");
+ res.setHeader("Cache-Control","private, no-store");res.json(publicProfile(user));
 }));
 app.post("/api/projects",auth,asyncRoute(async(req,res)=>{
   if(typeof req.body.title!=="string"||!req.body.title.trim())return sendError(res,400,"Project title is required.");
