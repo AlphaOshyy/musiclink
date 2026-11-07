@@ -14,6 +14,8 @@ const app = express();
 app.use(helmet());
 app.use(cors({ origin: process.env.CLIENT_ORIGIN || "http://localhost:5173" }));
 app.use(express.json({ limit: "128kb" }));
+app.use((req,res,next)=>{req.body??={};next();});
+app.use("/api/auth",(req,res,next)=>{res.setHeader("Cache-Control","no-store");next();});
 let connectPromise;
 const connectDB=()=>{
   if(mongoose.connection.readyState===1)return Promise.resolve();
@@ -57,11 +59,11 @@ const publicProfile = user => ({
 });
 function auth(req,res,next) {
   const token = (req.headers.authorization || "").replace(/^Bearer\s+/i, "");
-  try { req.auth = jwt.verify(token, SECRET); next(); }
+  try { req.auth = jwt.verify(token, SECRET, { issuer:"musiclink", audience:"musiclink-web", algorithms:["HS256"] }); next(); }
   catch { sendError(res,401,"Please log in."); }
 }
 const mine = async id => await User.findById(id).select("-passwordHash");
-const tokenFor = u => jwt.sign({ id:String(u._id), role:u.role }, SECRET, { expiresIn:"7d" });
+const tokenFor = u => jwt.sign({ id:String(u._id), role:u.role }, SECRET, { expiresIn:"7d", issuer:"musiclink", audience:"musiclink-web", algorithm:"HS256" });
 
 app.get("/api/health",(_,res)=>res.json({ok:true,service:"musiclink-api"}));
 app.get("/api/health/db",asyncRoute(async(_,res)=>{
@@ -70,18 +72,20 @@ app.get("/api/health/db",asyncRoute(async(_,res)=>{
 }));
 app.post("/api/auth/register",asyncRoute(async(req,res)=>{
   const {email,password,displayName}=req.body;
-  if(typeof email!=="string"||!/^\S+@\S+\.\S+$/.test(email)||typeof password!=="string"||password.length<8||password.length>128||typeof displayName!=="string"||displayName.trim().length<2) return sendError(res,400,"Provide a valid name, email, and password with at least 8 characters.");
+  if(typeof email!=="string"||email.length>254||!/^\S+@\S+\.\S+$/.test(email)||typeof password!=="string"||password.length<10||password.length>128||typeof displayName!=="string"||displayName.trim().length<2||displayName.trim().length>80) return sendError(res,400,"Provide a valid name, email, and password with at least 10 characters.");
   if(await User.exists({email:email.toLowerCase().trim()})) return sendError(res,409,"Email already registered.");
   const user=await User.create({email:email.toLowerCase().trim(),passwordHash:await bcrypt.hash(password,12),displayName:displayName.trim().slice(0,80)});
   res.status(201).json({token:tokenFor(user),user:publicProfile(user)});
 }));
 app.post("/api/auth/login",asyncRoute(async(req,res)=>{
-  const email=String(req.body.email||"").toLowerCase().trim();
+  const email=typeof req.body.email==="string"?req.body.email.toLowerCase().trim():"";
+  if(email.length>254||typeof req.body.password!=="string"||req.body.password.length>128)return sendError(res,401,"Invalid email or password.");
   const user=await User.findOne({email});
   if(!user||typeof req.body.password!=="string"||!await bcrypt.compare(req.body.password,user.passwordHash)) return sendError(res,401,"Invalid email or password.");
   res.json({token:tokenFor(user),user:publicProfile(user)});
 }));
 app.get("/api/me",auth,asyncRoute(async(req,res)=>{
+  res.setHeader("Cache-Control","no-store");
   const user=await mine(req.auth.id);
   if(!user)return sendError(res,401,"Account unavailable.");
   res.json(publicProfile(user));
