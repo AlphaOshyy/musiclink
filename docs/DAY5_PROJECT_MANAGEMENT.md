@@ -1,0 +1,3 @@
+# Day 5. Project creation, management and applications
+
+Owners create, edit, open, or close projects. Project data has strict server-side validation and optional calendar date. The project board filters open, owned and all projects. Applicants submit a note up to 600 characters, only to open projects, with duplicate protection. Project owners can review and accept/reject pending applications. The new `/api/me/applications` route returns the current user's submissions. Ownership and membership checks remain on the server. Closing prevents new applications, and project data persists in Atlas. No new services or paid keys.

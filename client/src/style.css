@@ -128,3 +128,18 @@ body,.workspace{background:var(--bg)}
 .creator-track-actions{justify-content:flex-end;margin-top:9px}
 .creator-track-actions button,.creator-track-actions a{font-size:11px;border:1px solid #dce5dc;padding:7px 10px;color:#2d533a;background:#edf2ec;border-radius:3px;display:flex;align-items:center}
 .creator-track .player-frame{margin-top:12px}
+
+/* Day 5 project ownership and lifecycle */
+.project-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0}
+.project-tabs button{padding:10px 15px;background:#fff;color:#4e6553;border:1px solid #d6dfd5;border-radius:4px;font-size:12px}
+.project-tabs button.selected{background:#26392c;color:#fff;border-color:#26392c}
+.project-form{max-width:900px}
+.project-form-actions{grid-column:1/-1;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.project-owner-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
+.project-owner-actions .btn-primary,.project-owner-actions .btn-outline{font-size:11px}
+.project-date{display:flex;align-items:center;gap:7px;font-size:11px;color:#718173!important}
+.application-form{display:grid;gap:12px;margin-top:20px}
+.application-form .field textarea{min-height:92px}
+.application-form .btn-primary{justify-self:start}
+.closed-message{padding:12px;border:1px solid #d2dcd0;background:#f0f3ed;border-radius:4px;font-size:12px}
+@media(max-width:650px){.project-owner-actions{flex-direction:column;align-items:flex-start}.project-form-actions{flex-direction:column;align-items:flex-start}}
