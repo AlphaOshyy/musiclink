@@ -40,7 +40,7 @@ export function validateApplication(input){
 }
 export function validateProjectQuery(q){
  if(!isObject(q))return {error:"Invalid filters."};
- if(Object.keys(q).some(x=>!["status","mine"].includes(x)))return {error:"Invalid project filters."};
+ // Ignore hosting and routing query keys; validate every supported filter strictly.
  if(q.status!==undefined&&!["open","closed","all"].includes(q.status))return {error:"Invalid status filter."};
  if(q.mine!==undefined&&!["true","false"].includes(q.mine))return {error:"Invalid ownership filter."};
  return {status:q.status||"all",mine:q.mine==="true"};

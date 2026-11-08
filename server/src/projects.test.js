@@ -20,4 +20,5 @@ test("project list filters are explicit",()=>{
  assert.deepEqual(validateProjectQuery({status:"open",mine:"true"}),{status:"open",mine:true});
  assert.ok(validateProjectQuery({mine:"yes"}).error);
  assert.ok(validateProjectQuery({status:"draft"}).error);
+ assert.deepEqual(validateProjectQuery({status:"open",path:"projects"}),{status:"open",mine:false});
 });
