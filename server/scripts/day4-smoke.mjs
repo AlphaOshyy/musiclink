@@ -1,0 +1,37 @@
+import assert from "node:assert/strict";
+import {randomBytes} from "node:crypto";
+const base="https://musiclink-api.vercel.app/api";
+const id=randomBytes(10).toString("hex");
+const email="ci-day4-"+id+"@example.invalid";
+const password=randomBytes(24).toString("base64url");
+async function call(path,method="GET",body=null,token=""){
+ const res=await fetch(base+path,{method,headers:{"Content-Type":"application/json",...(token?{Authorization:"Bearer "+token}:{})},body:body===null?undefined:JSON.stringify(body),signal:AbortSignal.timeout(30000)});
+ return {status:res.status,data:await res.json().catch(()=>({}))};
+}
+const register=await call("/auth/register","POST",{email,password,displayName:"CI Day4 Music Test"});
+assert.equal(register.status,201,"register temporary account");
+const token=register.data.token;
+const sample={title:"Test Track",url:"https://soundcloud.com/musiclink/day4-demo",description:"A test music sample",role:"Producer",releaseYear:2025,genres:["Trap"],tags:["Melodic"]};
+const created=await call("/me/portfolio","POST",sample,token);
+assert.equal(created.status,201,"create portfolio entry");
+let item=created.data.portfolio.at(-1);
+assert.equal(item.role,"Producer");
+assert.equal(item.releaseYear,2025);
+assert.equal(item.description,"A test music sample");
+const featured=await call("/me/portfolio/"+item._id+"/feature","PATCH",null,token);
+assert.equal(featured.status,200,"feature a sample");
+assert.equal(featured.data.portfolio.find(x=>x._id===item._id).featured,true);
+const edited=await call("/me/portfolio/"+item._id,"PATCH",{...sample,title:"Edited Test Track",releaseYear:2026},token);
+assert.equal(edited.status,200,"edit sample metadata");
+assert.equal(edited.data.portfolio.find(x=>x._id===item._id).title,"Edited Test Track");
+assert.equal(edited.data.portfolio.find(x=>x._id===item._id).featured,true,"featured flag must persist");
+const me=await call("/me","GET",null,token);
+assert.equal(me.status,200,"profile loads");
+assert.equal(me.data.portfolio.length,1,"portfolio persistence");
+assert.equal(me.data.portfolio[0].releaseYear,2026);
+assert.equal((await call("/me/portfolio","POST",{...sample,description:"x".repeat(351)},token)).status,400,"reject oversized description");
+assert.equal((await call("/me/portfolio","POST",{...sample,url:"javascript:alert(1)"},token)).status,400,"reject unsafe URL");
+assert.equal((await call("/me/portfolio/"+item._id,"DELETE",null,token)).status,200,"delete sample");
+const done=await call("/me","GET",null,token);
+assert.equal(done.data.portfolio.length,0,"removed sample no longer shown");
+console.log("PASS: Day 4 create, feature, update, read, validation, delete.");
