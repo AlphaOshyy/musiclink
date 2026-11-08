@@ -33,6 +33,8 @@ jobs:
         working-directory: client
       - run: npm run build
         working-directory: client
+      - run: node --test src/media.test.js
+        working-directory: client
 
   recommender:
     name: MCCA unit tests
