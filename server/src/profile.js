@@ -43,7 +43,10 @@ export function validatePortfolio(body){
  const url=validateUrl(body.url);if(!url)return {error:"Invalid portfolio URL."};
  const genres=normalizeTags(body.genres??[]),tags=normalizeTags(body.tags??[]);
  if(genres===null||tags===null)return {error:"Invalid portfolio tags."};
- return {item:{title:body.title.trim(),url,genres,tags}};
+ const description=body.description??"",role=body.role??"",year=body.releaseYear??null;
+ if(typeof description!=="string"||description.length>350||typeof role!=="string"||role.length>80)return {error:"Invalid description or credit."};
+ if(year!==null&&year!==""&&(!Number.isInteger(Number(year))||Number(year)<1900||Number(year)>new Date().getFullYear()+1))return {error:"Invalid release year."};
+ return {item:{title:body.title.trim(),url,genres,tags,description:description.trim(),role:role.trim(),releaseYear:year===null||year===""?null:Number(year)}};
 }
 export function profileCompleteness(u){
  const fields=[!!u.displayName?.trim(),!!u.profession?.trim(),!!u.bio?.trim(),!!u.avatarUrl,!!u.genres?.length,!!u.skills?.length,!!u.creativeTags?.length,!!u.portfolio?.length,!!u.preferredRoles?.length,!!u.preferredGenres?.length];

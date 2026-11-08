@@ -19,6 +19,10 @@ const User = model("User", new Schema({
   portfolio: [{
     title: { type: String, required: true },
     url: { type: String, required: true },
+    description: { type: String, default: "", maxlength: 350 },
+    role: { type: String, default: "", maxlength: 80 },
+    releaseYear: { type: Number, default: null, min: 1900, max: 2100 },
+    featured: { type: Boolean, default: false },
     genres: tags(), tags: tags()
   }],
   followerCount: { type: Number, default: 0, min: 0 }

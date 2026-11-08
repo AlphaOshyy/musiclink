@@ -111,6 +111,15 @@ app.patch("/api/me/portfolio/:id",auth,asyncRoute(async(req,res)=>{
  if(!item)return sendError(res,404,"Sample not found.");
  Object.assign(item,parsed.item);await user.save();res.json(publicProfile(user));
 }));
+app.patch("/api/me/portfolio/:id/feature",auth,asyncRoute(async(req,res)=>{
+ if(!idOk(req.params.id))return sendError(res,400,"Invalid sample ID.");
+ const user=await User.findById(req.auth.id);
+ if(!user)return sendError(res,401,"Account unavailable.");
+ const sample=user.portfolio.id(req.params.id);
+ if(!sample)return sendError(res,404,"Sample not found.");
+ for(const item of user.portfolio)item.featured=String(item._id)===req.params.id;
+ await user.save();res.json(publicProfile(user));
+}));
 app.delete("/api/me/portfolio/:id",auth,asyncRoute(async(req,res)=>{
  if(!idOk(req.params.id))return sendError(res,400,"Invalid sample ID.");
  const user=await User.findById(req.auth.id);

@@ -97,3 +97,25 @@ body,.workspace{background:var(--bg)}
 .creator-avatar img,.creator-detail-avatar img,.profile-avatar img{display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit}
 .creator-avatar,.creator-detail-avatar,.profile-avatar{overflow:hidden}
 .profile-progress{display:inline-flex;border:1px solid #cbd8cb;padding:7px 10px;color:#517657;font-size:10px;font-weight:800;letter-spacing:.08em;margin-bottom:16px}
+
+/* Day 4 / concise music catalogue */
+.portfolio-intro{margin-bottom:20px}
+.portfolio-intro h2{margin:9px 0;font-size:25px;color:#293b2e}
+.portfolio-intro p{font-size:12px}
+.portfolio-actions{grid-column:1/-1;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.portfolio-track{background:#fff;border:1px solid #dce4d9;padding:21px;border-radius:5px}
+.portfolio-track-row{display:flex;align-items:flex-start;gap:17px}
+.portfolio-track-art{display:grid;place-items:center;width:64px;height:64px;flex:0 0 64px;background:#e7eee5;color:#51745a;border-radius:4px}
+.portfolio-track-body{min-width:0;flex:1}
+.portfolio-track-body h3{font-size:18px;color:#26352a;margin:7px 0}
+.portfolio-track-body p{font-size:12px;margin:0;color:#627467}
+.portfolio-track-body .track-description{margin-top:6px}
+.track-topline{display:flex;align-items:center;gap:9px;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#859085}
+.featured-label{display:inline-block;color:#985237;background:#f7e9df;padding:3px 7px;font-weight:800;font-size:9px;border-radius:2px}
+.portfolio-track-controls{display:flex;gap:9px;align-items:center;flex-wrap:wrap;border-top:1px solid #e7ece5;margin-top:15px;padding-top:15px}
+.portfolio-track-controls button,.portfolio-track-controls a{font-size:11px;color:#35503b;border:1px solid #dce3da;background:#f9faf7;padding:9px 11px;display:inline-flex;align-items:center;gap:5px;text-decoration:none;border-radius:3px}
+.portfolio-track-controls button:disabled{opacity:.55}
+.portfolio-track-controls button:hover,.portfolio-track-controls a:hover{background:#e8f0e8}
+.player-frame{margin-top:18px;border-radius:4px;overflow:hidden;background:#141f19}
+.player-frame iframe{width:100%;min-height:165px;height:195px;border:0;display:block}
+@media(max-width:650px){.portfolio-track-controls{gap:6px}.portfolio-track-controls button,.portfolio-track-controls a{padding:8px}.portfolio-track{padding:14px}.portfolio-track-art{width:48px;height:48px;flex-basis:48px}}

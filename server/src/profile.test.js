@@ -29,3 +29,11 @@ test("search parameters have bounded pagination and escaped regex",()=>{
  assert.ok(creatorSearch({limit:"1000"}).error);
  assert.ok(creatorSearch({available:"yes"}).error);
 });
+
+test("Day 4 credits, description, release year and defaults",()=>{
+ const x=validatePortfolio({title:"Original",url:"https://soundcloud.com/a/b",description:"My beat",role:"Producer",releaseYear:2024});
+ assert.equal(x.item.role,"Producer");assert.equal(x.item.releaseYear,2024);
+ assert.ok(validatePortfolio({title:"X",url:"https://example.com/a",description:"x".repeat(351)}).error);
+ assert.ok(validatePortfolio({title:"X",url:"https://example.com/a",releaseYear:1800}).error);
+ assert.equal(validatePortfolio({title:"X",url:"https://example.com/a"}).item.role,"");
+});
