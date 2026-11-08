@@ -10,6 +10,7 @@ import mongoose from "mongoose";
 import { User, Project, Application, Invitation } from "./models.js";
 import { rank } from "./matcher.js";
 import { publicProfile, validateProfile, validatePortfolio, creatorSearch } from "./profile.js";
+import { validateProject, validateApplication, validateProjectQuery } from "./projects.js";
 
 const app = express();
 app.use(helmet());
@@ -144,64 +145,67 @@ app.get("/api/creators/:id",auth,asyncRoute(async(req,res)=>{
  res.setHeader("Cache-Control","private, no-store");res.json(publicProfile(user));
 }));
 app.post("/api/projects",auth,asyncRoute(async(req,res)=>{
-  if(typeof req.body.title!=="string"||!req.body.title.trim())return sendError(res,400,"Project title is required.");
-  const project=await Project.create({
-    owner:req.auth.id,title:req.body.title.trim().slice(0,120),
-    description:typeof req.body.description==="string"?req.body.description.slice(0,2000):"",
-    requiredRoles:cleanTags(req.body.requiredRoles),
-    requiredSkills:cleanTags(req.body.requiredSkills),
-    genres:cleanTags(req.body.genres),
-    creativeTags:cleanTags(req.body.creativeTags),
-    targetDate:req.body.targetDate||null
-  });
-  res.status(201).json(project);
+ const parsed=validateProject(req.body);
+ if(parsed.error)return sendError(res,400,parsed.error);
+ const project=await Project.create({owner:req.auth.id,...parsed.update});
+ res.status(201).json(project);
 }));
 app.get("/api/projects",auth,asyncRoute(async(req,res)=>{
-  const projects=await Project.find().sort({createdAt:-1}).limit(100).populate("owner","displayName profession");
-  res.json(projects);
+ const parsed=validateProjectQuery(req.query);
+ if(parsed.error)return sendError(res,400,parsed.error);
+ const filter={};
+ if(parsed.status!=="all")filter.status=parsed.status;
+ if(parsed.mine)filter.owner=req.auth.id;
+ const projects=await Project.find(filter).sort({createdAt:-1}).limit(100).populate("owner","displayName profession");
+ res.json(projects);
 }));
 app.get("/api/projects/:id",auth,asyncRoute(async(req,res)=>{
-  if(!idOk(req.params.id))return sendError(res,400,"Invalid project.");
-  const project=await Project.findById(req.params.id).populate("owner","displayName profession");
-  if(!project)return sendError(res,404,"Project not found.");
-  res.json(project);
+ if(!idOk(req.params.id))return sendError(res,400,"Invalid project.");
+ const project=await Project.findById(req.params.id).populate("owner","displayName profession");
+ if(!project)return sendError(res,404,"Project not found.");
+ res.json(project);
 }));
 app.patch("/api/projects/:id",auth,asyncRoute(async(req,res)=>{
-  if(!idOk(req.params.id))return sendError(res,400,"Invalid project.");
-  const project=await Project.findById(req.params.id);
-  if(!project)return sendError(res,404,"Project not found.");
-  if(String(project.owner)!==req.auth.id)return sendError(res,403,"Only the owner may edit a project.");
-  const update={};
-  for(const field of ["title","description","status","genres","creativeTags","requiredRoles","requiredSkills","targetDate"])if(req.body[field]!==undefined){
-    if(["genres","creativeTags","requiredRoles","requiredSkills"].includes(field)) update[field]=cleanTags(req.body[field]);
-    else update[field]=req.body[field];
-  }
-  Object.assign(project,update);await project.save();res.json(project);
+ if(!idOk(req.params.id))return sendError(res,400,"Invalid project.");
+ const parsed=validateProject(req.body,{partial:true});
+ if(parsed.error)return sendError(res,400,parsed.error);
+ const project=await Project.findById(req.params.id);
+ if(!project)return sendError(res,404,"Project not found.");
+ if(String(project.owner)!==req.auth.id)return sendError(res,403,"Only the owner may edit this project.");
+ Object.assign(project,parsed.update);await project.save();
+ res.json(project);
 }));
 app.post("/api/projects/:id/apply",auth,asyncRoute(async(req,res)=>{
-  if(!idOk(req.params.id))return sendError(res,400,"Invalid project.");
-  const project=await Project.findById(req.params.id);
-  if(!project||project.status!=="open")return sendError(res,404,"Open project not found.");
-  if(String(project.owner)===req.auth.id)return sendError(res,400,"Owner cannot apply.");
-  const existing=await Application.findOne({project:project._id,creator:req.auth.id});
-  if(existing)return sendError(res,409,"Already applied.");
-  const application=await Application.create({project:project._id,creator:req.auth.id,note:String(req.body.note||"").slice(0,600)});
-  res.status(201).json(application);
+ if(!idOk(req.params.id))return sendError(res,400,"Invalid project.");
+ const parsed=validateApplication(req.body);
+ if(parsed.error)return sendError(res,400,parsed.error);
+ const project=await Project.findById(req.params.id);
+ if(!project||project.status!=="open")return sendError(res,404,"Open project not found.");
+ if(String(project.owner)===req.auth.id)return sendError(res,400,"You cannot apply to your own project.");
+ if(await Application.exists({project:project._id,creator:req.auth.id}))return sendError(res,409,"You already applied.");
+ const appRecord=await Application.create({project:project._id,creator:req.auth.id,note:parsed.note});
+ res.status(201).json(appRecord);
+}));
+app.get("/api/me/applications",auth,asyncRoute(async(req,res)=>{
+ const items=await Application.find({creator:req.auth.id}).sort({createdAt:-1}).limit(100).populate("project","title status");
+ res.json(items);
 }));
 app.get("/api/projects/:id/applications",auth,asyncRoute(async(req,res)=>{
-  if(!idOk(req.params.id))return sendError(res,400,"Invalid project.");
-  const project=await Project.findById(req.params.id);
-  if(!project||String(project.owner)!==req.auth.id)return sendError(res,403,"Only the owner may view applications.");
-  const apps=await Application.find({project:project._id}).populate("creator","displayName profession genres skills");
-  res.json(apps);
+ if(!idOk(req.params.id))return sendError(res,400,"Invalid project.");
+ const project=await Project.findById(req.params.id);
+ if(!project||String(project.owner)!==req.auth.id)return sendError(res,403,"Only the owner may view applications.");
+ const apps=await Application.find({project:project._id}).sort({createdAt:-1}).populate("creator","displayName profession genres skills avatarUrl");
+ res.json(apps);
 }));
 app.patch("/api/applications/:id",auth,asyncRoute(async(req,res)=>{
-  if(!idOk(req.params.id))return sendError(res,400,"Invalid application.");
-  const application=await Application.findById(req.params.id).populate("project");
-  if(!application)return sendError(res,404,"Application not found.");
-  if(String(application.project.owner)!==req.auth.id)return sendError(res,403,"Only the owner may review applications.");
-  if(!["accepted","rejected"].includes(req.body.status))return sendError(res,400,"Invalid status.");
-  application.status=req.body.status;await application.save();res.json(application);
+ if(!idOk(req.params.id))return sendError(res,400,"Invalid application.");
+ if(!["accepted","rejected"].includes(req.body.status)||Object.keys(req.body).some(k=>k!=="status"))return sendError(res,400,"Invalid application status.");
+ const application=await Application.findById(req.params.id).populate("project");
+ if(!application||!application.project)return sendError(res,404,"Application not found.");
+ if(String(application.project.owner)!==req.auth.id)return sendError(res,403,"Only the project owner may review applications.");
+ if(application.status!=="pending")return sendError(res,409,"Application was already reviewed.");
+ if(application.project.status!=="open")return sendError(res,409,"This project is closed.");
+ application.status=req.body.status;await application.save();res.json(application);
 }));
 app.get("/api/invitations",auth,asyncRoute(async(req,res)=>{
   const invites=await Invitation.find({receiver:req.auth.id}).populate("project","title").populate("sender","displayName");
