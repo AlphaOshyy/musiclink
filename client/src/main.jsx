@@ -38,7 +38,7 @@ function App(){
   return data;
  };
  const safe=async(fn)=>{try{setError("");setNotice("");await fn()}catch(e){setError(e.message)}};
- const refresh=async()=>{const [u,p,c,i]=await Promise.all([request("/me"),request("/projects"),request("/creators"),request("/invitations")]);setMe(u);setProjects(p);setCreators(c);setInvites(i)};
+ const refresh=async()=>{const [u,p,c,i,a]=await Promise.all([request("/me"),request("/projects"),request("/creators"),request("/invitations"),request("/me/applications")]);setMe(u);setProjects(p);setCreators(c);setInvites(i);setMyApplications(a)};
  useEffect(()=>{if(token)refresh().catch(e=>{if(e.status===401){localStorage.removeItem("ml_token");setToken("");setMe(null)}else{setError("Unable to connect. Your session is still saved. Please refresh the page.")}})},[token]);
  const sign=async(e)=>{e.preventDefault();if(authBusy)return;setAuthBusy(true);try{await safe(async()=>{if(authMode==="register"&&form.password!==form.confirmPassword)throw new Error("Passwords do not match.");const {confirmPassword,...details}=form;const result=await request("/auth/"+authMode,{method:"POST",body:JSON.stringify(details)});localStorage.setItem("ml_token",result.token);setToken(result.token);setForm({})})}finally{setAuthBusy(false)}};
  const saveProfile=async(e)=>{e.preventDefault();await safe(async()=>{await request("/me",{method:"PUT",body:JSON.stringify({
@@ -139,6 +139,7 @@ function App(){
  {p.targetDate&&<p className="project-date"><CalendarDays size={13}/> Target {new Date(p.targetDate).toLocaleDateString()}</p>}
  <div className="card-bottom"><span>{(p.requiredRoles||[]).slice(0,2).join(" · ")||"Open call"}</span><button className="arrow-button" aria-label={"Explore "+p.title} onClick={()=>openProject(p)}><ArrowUpRight size={20}/></button></div>
  </article>)}</div>:empty(<AudioLines size={26}/>,"No matching projects.","Try another filter or publish your own project.","Create project",()=>go("Create project"))}
+ {myApplications.length>0&&<div className="my-applications"><div className="section-heading"><div><span className="section-index">YOUR REQUESTS</span><h2>My applications <span className="count-number">{myApplications.length}</span></h2></div></div>{myApplications.map(a=><div className="my-application-row" key={a._id}><div><strong>{a.project?.title||"Project"}</strong><span>{a.note||"Application submitted"}</span></div><span className={"application-status status-"+a.status}>{a.status}</span></div>)}</div>}
  </>}
  {page==="Create project"&&<div className="form-panel project-form"><div className="form-head"><span className="section-index">{editProject?"EDIT PROJECT":"NEW PROJECT"}</span><h2>{editProject?"Update your project":"Share a project"}</h2><p>Tell other musicians what you are making and who you need.</p></div>
  <form className="form-grid" onSubmit={createProject}>
