@@ -8,7 +8,7 @@ import jwt from "jsonwebtoken";
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 import mongoose from "mongoose";
 import { User, Project, Application, Invitation } from "./models.js";
-import { rank } from "./matcher.js";
+import { rank, evaluateRanking } from "./matcher.js";
 import { publicProfile, validateProfile, validatePortfolio, creatorSearch } from "./profile.js";
 import { validateProject, validateApplication, validateProjectQuery } from "./projects.js";
 
@@ -227,24 +227,31 @@ app.patch("/api/invitations/:id",auth,asyncRoute(async(req,res)=>{
   invite.status=req.body.status;await invite.save();res.json(invite);
 }));
 app.get("/api/projects/:id/recommendations",auth,asyncRoute(async(req,res)=>{
-  if(!idOk(req.params.id))return sendError(res,400,"Invalid project.");
-  const project=await Project.findById(req.params.id);
-  if(!project||String(project.owner)!==req.auth.id)return sendError(res,403,"Only the project owner may view recommendations.");
-  const owner=await User.findById(req.auth.id);
-  const candidates=await User.find({_id:{$ne:req.auth.id}}).limit(500);
-  const result=rank({...project.toObject(),ownerPreferences:{roles:owner.preferredRoles,genres:owner.preferredGenres,tags:owner.preferredTags}},candidates);
-  const blind=req.query.mode!=="visible";
-  const byId=new Map(candidates.map(u=>[String(u._id),u]));
-  const ranked=result.ranked.map((item,i)=>{
-    const user=byId.get(item.id);
-    const shortlisted=project.shortlist.some(id=>String(id)===item.id);
-    const showIdentity=!blind||shortlisted;
-    const identity=showIdentity?{id:item.id,displayName:user.displayName,profession:user.profession,portfolio:user.portfolio.map(x=>({title:x.title,url:x.url}))}:{anonymousRef:"Candidate "+String(i+1).padStart(2,"0"),profession:user.profession};
-    const matchToken=showIdentity?item.id:sealCandidate(item.id,String(project._id));
-    return { ...identity,matchId:matchToken,shortlisted,score:item.score,forward:item.forward,reverse:item.reverse,factors:item.factors,explanation:item.explanation,baseline:item.baseline,
-      genres:user.genres,skills:user.skills,creativeTags:user.creativeTags,available:user.available };
-  });
-  res.json({mode:blind?"blind":"visible",weights:result.weights,ranked});
+ if(!idOk(req.params.id))return sendError(res,400,"Invalid project.");
+ const mode=req.query.mode||"blind";
+ if(!["blind","visible"].includes(mode))return sendError(res,400,"Select blind or visible review.");
+ const project=await Project.findById(req.params.id);
+ if(!project||String(project.owner)!==req.auth.id)return sendError(res,403,"Only project owners may see recommendations.");
+ const candidates=await User.find({_id:{$ne:req.auth.id}}).sort({_id:1}).limit(500)
+  .select("displayName profession genres skills creativeTags available portfolio preferredRoles preferredGenres preferredTags");
+ const result=rank(project.toObject(),candidates);
+ const blind=mode==="blind";
+ const byId=new Map(candidates.map(u=>[String(u._id),u]));
+ const ranked=result.ranked.map((item,i)=>{
+  const user=byId.get(item.id);
+  const shortlisted=project.shortlist.some(id=>String(id)===item.id);
+  const visible=!blind||shortlisted;
+  // Blind mode intentionally omits creator profession and raw genre/skill tags.
+  const identity=visible?{id:item.id,displayName:user.displayName,profession:user.profession,
+   portfolio:user.portfolio.map(x=>({title:x.title,url:x.url}))}:{anonymousRef:"Candidate "+String(i+1).padStart(2,"0")};
+  return {...identity,matchId:visible?item.id:sealCandidate(item.id,String(project._id)),shortlisted,
+   score:item.score,forward:item.forward,reverse:item.reverse,factors:item.factors,
+   reverseFactors:item.reverseFactors,roleMatch:item.roleMatch,evidence:item.evidence,
+   explanation:item.explanation,baseline:item.baseline,
+   ...(visible?{genres:user.genres,skills:user.skills,creativeTags:user.creativeTags,available:user.available}: {})};
+ });
+ res.setHeader("Cache-Control","no-store");
+ res.json({mode,method:result.method,weights:result.weights,summary:evaluateRanking(result.ranked),ranked});
 }));
 app.post("/api/projects/:id/shortlist",auth,asyncRoute(async(req,res)=>{
   if(!idOk(req.params.id)||typeof req.body.candidateId!=="string")return sendError(res,400,"Invalid IDs.");
