@@ -78,7 +78,7 @@ function App(){
  const set=(key,value)=>setForm(f=>({...f,[key]:value}));
  const input=(name,label,placeholder="",required=false)=> <label className="field" key={name}><span>{label}</span><input value={form[name]??""} onChange={e=>set(name,e.target.value)} placeholder={placeholder} required={required}/></label>;
 
- const brand=<span className="wordmark">music<span>link</span><span className="brand-dot">.</span></span>;
+ const brand=<span className="brand-lockup"><img className="brand-symbol" src="/musiclink-mark.webp" alt="" aria-hidden="true"/><span className="wordmark">Music<span>Link</span></span></span>;
  const navItems=[["Projects",Compass],["Create project",Plus],["Creators",UsersRound],["My profile",UserRound],["Portfolio",Music2],["Invitations",Mail]];
  const pageCopy={
   "Projects":{overline:"PROJECTS",heading:"Find your next",accent:"session.",description:"Browse collaborations from independent musicians."},
