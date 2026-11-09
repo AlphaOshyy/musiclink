@@ -1,0 +1,47 @@
+import assert from "node:assert/strict";
+import {randomBytes} from "node:crypto";
+const BASE="https://musiclink-api.vercel.app/api";
+const suffix=randomBytes(10).toString("hex"),password=randomBytes(28).toString("base64url");
+async function request(path,method="GET",body=null,token=""){
+ const r=await fetch(BASE+path,{method,headers:{"Content-Type":"application/json",...(token?{Authorization:"Bearer "+token}:{})},body:body===null?undefined:JSON.stringify(body),signal:AbortSignal.timeout(30000)});
+ return {status:r.status,data:await r.json().catch(()=>({}))};
+}
+async function signup(name){
+ const r=await request("/auth/register","POST",{displayName:name,email:"ci-day6-"+suffix+"-"+name.toLowerCase()+"@example.invalid",password});
+ assert.equal(r.status,201,"Register test creator");return r.data;
+}
+const owner=await signup("Owner"),candidate=await signup("Candidate"),outsider=await signup("Outsider");
+const update=await request("/me","PUT",{profession:"Singer",genres:["Trap"],skills:["Singing"],creativeTags:["Dark"],available:true,preferredGenres:["Trap"],preferredRoles:["Vocalist"],preferredTags:["Dark"]},candidate.token);
+assert.equal(update.status,200);
+const unrelated=await request("/me","PUT",{profession:"Mastering Engineer",genres:["Jazz"],skills:["Mastering"],creativeTags:["Bright"],available:false,preferredGenres:["Jazz"]},outsider.token);
+assert.equal(unrelated.status,200);
+const project=await request("/projects","POST",{title:"Day6 Music Matching Test",requiredRoles:["Vocalist"],requiredSkills:["Singing"],genres:["Trap"],creativeTags:["Dark"]},owner.token);
+assert.equal(project.status,201);
+const id=project.data._id;
+assert.equal((await request("/projects/"+id+"/recommendations","GET",null,outsider.token)).status,403);
+const blind=await request("/projects/"+id+"/recommendations?mode=blind","GET",null,owner.token);
+assert.equal(blind.status,200);
+assert.equal(blind.data.method,"MCCA-RCC v2");
+assert.equal(blind.data.ranked.length,2);
+assert.equal(blind.data.summary.candidateCount,2);
+assert.ok(!JSON.stringify(blind.data).includes("Candidate@"));
+assert.ok(!JSON.stringify(blind.data).includes("email"));
+assert.equal(blind.data.ranked[0].displayName,undefined);
+assert.equal(blind.data.ranked[0].profession,undefined);
+assert.equal(blind.data.ranked[0].genres,undefined);
+assert.equal(blind.data.ranked[0].id,undefined);
+assert.ok(blind.data.ranked[0].score>=blind.data.ranked[1].score);
+assert.equal(Object.keys(blind.data.ranked[0].factors).length,5);
+assert.equal((await request("/projects/"+id+"/recommendations?mode=secret","GET",null,owner.token)).status,400);
+const visible=await request("/projects/"+id+"/recommendations?mode=visible","GET",null,owner.token);
+assert.equal(visible.status,200);
+assert.equal(visible.data.ranked[0].id,candidate.user.id,"Vocalist matching should rank first");
+assert.ok(visible.data.ranked[0].score>visible.data.ranked[1].score);
+const shortlist=await request("/projects/"+id+"/shortlist","POST",{candidateId:blind.data.ranked[0].matchId},owner.token);
+assert.equal(shortlist.status,200,"blind token shortlist");
+const revealed=await request("/projects/"+id+"/recommendations?mode=blind","GET",null,owner.token);
+const item=revealed.data.ranked.find(x=>x.id===candidate.user.id);
+assert.ok(item?.shortlisted,"shortlisted candidate identity may be revealed");
+const invite=await request("/projects/"+id+"/invite","POST",{receiverId:candidate.user.id},owner.token);
+assert.equal(invite.status,201,"shortlist allows invitation");
+console.log("PASS: Day 6 owner isolation, blindness, ranking, explanation, shortlist and invite.");
