@@ -793,3 +793,115 @@ h1,h2,h3,.brand-lockup .wordmark{font-family:'Syne','Space Grotesk',sans-serif}
  .project-card:hover,.creator-card:hover,.match-card:hover{transform:none}
  .editorial-cover>img{transition:none}
 }
+
+
+/* MUSICLINK / FREQUENCY. Original kinetic graphic system.
+   Sound-reactive forms are a visual motif, not microphone-powered analysis. */
+:root{--frequency-ink:#080a12;--frequency-lilac:#c4a7ff;--frequency-cyan:#61d9fa}
+body,.workspace,.main-area{background:#090a11}
+.sidebar{background:#090a11;border-bottom:1px solid #ffffff1f}
+.sidebar-brand .brand-symbol{filter:drop-shadow(0 0 16px #7c53d75b)}
+.nav-item.active:after{height:3px;background:linear-gradient(90deg,#ce95ff,#77dfff)}
+.topbar{background:#090a11;color:#b7b2c2}
+.sonic-heading{margin-bottom:37px}
+.sonic-heading .heading-row{isolation:isolate}
+.sonic-heading .heading-copy{padding-top:70px;padding-bottom:68px}
+.sonic-heading h1{font-size:clamp(64px,8.8vw,157px);line-height:.87;max-width:1120px;font-weight:800;letter-spacing:-.095em}
+.sonic-heading h1 em{color:#d1b5fc}
+.sonic-heading .heading-copy>p{font-size:15px;color:#bab7c8}
+.sonic-heading .heading-lower{margin-top:44px}
+.sonic-heading .heading-index{padding:10px 0 22px}
+.sonic-heading .heading-rule{border-color:#ffffff30}
+.sonic-heading.has-feature-art .heading-row{grid-template-columns:minmax(0,1.28fr) minmax(320px,.72fr);min-height:590px}
+.sonic-cover{clip-path:none;background:
+ radial-gradient(circle at 54% 44%,#372651 0%,#131422 32%,#070b16 73%);
+ border:1px solid #ffffff23;min-height:560px;overflow:hidden}
+.sonic-cover:before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 47px,#ffffff09 48px 49px),repeating-linear-gradient(0deg,transparent 0 47px,#ffffff08 48px 49px);mask-image:linear-gradient(0deg,#0009,transparent 88%)}
+.sonic-cover-footer{position:absolute;bottom:22px;left:26px;right:24px;display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:9px;color:#b6b9d3;letter-spacing:.09em;font-weight:750}
+.sonic-cover-footer span:last-child{display:flex;align-items:center;gap:7px;color:#e0cbff}
+.sonic-sculpture{position:relative;isolation:isolate;display:grid;place-items:center;width:100%;height:100%;min-height:475px;overflow:hidden;--px:0;--py:0}
+.sonic-core{position:relative;width:min(90%,540px);aspect-ratio:1;display:grid;place-items:center;transform:perspective(900px) rotateX(calc(var(--py) * -9deg)) rotateY(calc(var(--px) * 12deg));transition:transform .25s ease-out;filter:drop-shadow(0 30px 50px #000a)}
+.sonic-core:before{content:"";position:absolute;width:67%;aspect-ratio:1;border:1px solid #ceacff33;border-radius:50%;box-shadow:0 0 40px #8459ff26}
+.sonic-disc{height:100%;width:100%;animation:sonic-breathe 8s ease-in-out infinite}
+.sonic-disc .sonic-wave-ring{transform-origin:50% 50%;animation:sonic-spin 50s linear infinite}
+.sonic-disc .sonic-wave-ring line{animation:sonic-bars 2.8s ease-in-out infinite;transform-origin:50% 50%}
+.sonic-halo{position:absolute;pointer-events:none;border:1px solid #c49eff32;border-radius:50%;width:74%;aspect-ratio:1;transform:rotate(25deg) scaleY(.42);box-shadow:0 0 90px #7d4cfc1c}
+.sonic-halo-one{animation:sonic-orbit 16s ease-in-out infinite}
+.sonic-halo-two{width:85%;border-color:#56b3ed22;transform:rotate(-28deg) scaleY(.48);animation:sonic-orbit-reverse 23s ease-in-out infinite}
+.sonic-core-glint{position:absolute;inset:20%;border-radius:50%;pointer-events:none;background:linear-gradient(130deg,#ffffff15,transparent 43%,#78caff0b 75%);mix-blend-mode:screen}
+.sonic-coordinate{position:absolute;color:#b5aed0;opacity:.8;letter-spacing:.16em;font-size:9px;font-weight:750}
+.sonic-coordinate-a{top:10%;left:8%}
+.sonic-coordinate-b{top:19%;right:7%;writing-mode:vertical-rl}
+@keyframes sonic-spin{to{transform:rotate(360deg)}}
+@keyframes sonic-bars{0%,100%{opacity:.37}45%{opacity:.94}}
+@keyframes sonic-breathe{0%,100%{transform:scale(.976)}50%{transform:scale(1.035)}}
+@keyframes sonic-orbit{0%,100%{transform:rotate(25deg) scaleY(.42)}50%{transform:rotate(40deg) scaleY(.49)}}
+@keyframes sonic-orbit-reverse{0%,100%{transform:rotate(-28deg) scaleY(.48)}50%{transform:rotate(-46deg) scaleY(.41)}}
+.auth-layout{grid-template-columns:minmax(0,1.15fr) minmax(390px,.85fr)}
+.auth-visual{background:#080a16;overflow:hidden}
+.auth-sonic{position:absolute;inset:0;background:
+ radial-gradient(circle at 63% 52%,#4a2b78 0%,#19132b 37%,#080a15 75%)}
+.auth-sonic .sonic-sculpture{height:100%;min-height:100vh}
+.auth-sonic .sonic-core{width:min(78%,680px);opacity:.92;transform:perspective(900px) translateX(12%) rotateX(calc(var(--py) * -9deg)) rotateY(calc(var(--px) * 12deg))}
+.auth-sonic .sonic-halo{opacity:.8}
+.auth-visual .auth-shade{background:linear-gradient(90deg,#080a15c9,#080a1530 65%,#080a150f),linear-gradient(0deg,#090a16ed,transparent 55%)}
+.auth-visual .auth-feature{position:relative;padding-bottom:57px;max-width:950px}
+.auth-visual .auth-feature h1{font-size:clamp(78px,8vw,148px);line-height:.85;letter-spacing:-.09em;text-shadow:0 4px 32px #07061180!important}
+.auth-visual .auth-feature h1 em{color:#dabaff!important}
+.auth-visual .auth-feature>p{font-size:16px;color:#efebf5!important;max-width:430px}
+.auth-feature>.eyebrow{font-size:10px;color:#d6bdff!important}
+.auth-top{position:relative;z-index:2}
+.auth-pane{background:#eae7e2;color:#19171c}
+.auth-box h2{color:#18141d}
+.auth-box .eyebrow{color:#5d4780}
+.auth-box .field input{background:#faf9f7}
+.auth-submit{background:#bfa0ff}
+.project-card{border-color:#34313b}
+.project-art{background:#14121e;isolation:isolate}
+.project-art:before{display:block;content:"";position:absolute;inset:0;border:0;border-radius:0;width:auto;height:auto;background:linear-gradient(135deg,#39314e,#111223),radial-gradient(circle at 55% 50%,#7944b4,transparent 55%);opacity:.8}
+.project-art:after{display:block;content:"";position:absolute;top:50%;left:50%;width:185px;height:185px;border:1px solid #cfa8ff77;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 21px #cfa8ff12,0 0 0 48px #cfa8ff08;animation:sonic-breathe 5s ease-in-out infinite}
+.project-art-track{position:absolute;inset:0;z-index:1;background:repeating-linear-gradient(90deg,transparent 0 14px,#d4b8ff18 15px 16px);mask-image:linear-gradient(90deg,transparent,#000 35%,#000 65%,transparent)}
+.project-art-inner{position:relative;z-index:2}
+.project-art-corner{z-index:3}
+.project-card:nth-child(3n+2) .project-art{background:#141724}
+.project-card:nth-child(3n) .project-art{background:#191224}
+.project-card:hover .project-art:after{animation-duration:2s}
+.editorial-marquee{background:#c3a7ff}
+@media(min-width:1200px){
+ .sonic-heading.has-feature-art .heading-copy{margin-right:-9%;z-index:4}
+ .sonic-heading.has-feature-art h1{white-space:nowrap}
+}
+@media(max-width:1199px){
+ .sonic-heading.has-feature-art .heading-row{grid-template-columns:minmax(0,1.15fr) minmax(255px,.85fr);min-height:450px}
+ .sonic-heading h1{font-size:clamp(56px,7vw,96px)}
+ .sonic-cover{min-height:430px}
+ .sonic-sculpture{min-height:400px}
+ .auth-visual .auth-feature h1{font-size:clamp(66px,7vw,110px)}
+}
+@media(max-width:850px){
+ .sonic-heading.has-feature-art .heading-row{grid-template-columns:minmax(0,1fr) minmax(235px,.9fr);min-height:380px}
+ .sonic-heading .heading-copy{padding:40px 5px 40px 0}
+ .sonic-heading h1{font-size:clamp(49px,7.4vw,76px)}
+ .sonic-cover,.sonic-sculpture{min-height:360px}
+ .auth-sonic .sonic-sculpture{min-height:480px}
+ .auth-visual .auth-feature h1{font-size:clamp(60px,9vw,96px)}
+}
+@media(max-width:650px){
+ .sonic-heading.has-feature-art .heading-row{display:flex;flex-direction:column}
+ .sonic-heading .heading-copy{padding:38px 0 30px}
+ .sonic-heading h1{font-size:clamp(50px,11vw,78px)}
+ .sonic-cover{min-height:290px}
+ .sonic-cover .sonic-sculpture{min-height:305px}
+ .sonic-cover .sonic-core{width:min(83%,340px)}
+ .sonic-coordinate{font-size:8px}
+ .sonic-cover-footer{left:14px;right:14px;bottom:12px;font-size:7px}
+ .auth-visual{min-height:460px}
+ .auth-sonic .sonic-sculpture{min-height:480px}
+ .auth-sonic .sonic-core{width:80%;transform:translateX(19%)}
+ .auth-visual .auth-feature{padding:30px 24px 25px}
+ .auth-visual .auth-feature h1{font-size:clamp(61px,12vw,84px)}
+}
+@media(prefers-reduced-motion:reduce){
+ .sonic-disc,.sonic-disc .sonic-wave-ring,.sonic-disc .sonic-wave-ring line,.sonic-halo,.project-art:after{animation:none!important}
+ .sonic-core{transition:none}
+}

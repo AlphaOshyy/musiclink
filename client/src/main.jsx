@@ -4,6 +4,44 @@ import{createRoot}from"react-dom/client";
 import "./style.css";
 import { getMedia } from "./media.js";
 
+
+const SONIC_BARS=Array.from({length:64},(_,i)=>{
+ const a=(i/64)*Math.PI*2;
+ const pulse=.55+.45*Math.abs(Math.sin(i*.79)+.42*Math.cos(i*1.41));
+ return {angle:i*360/64,inner:119,outer:123+pulse*48,delay:-(i%17)*.11};
+});
+function SonicSculpture({compact=false}){
+ const onMove=e=>{
+  if(window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const r=e.currentTarget.getBoundingClientRect();
+  e.currentTarget.style.setProperty("--px",((e.clientX-r.left)/r.width-.5).toFixed(2));
+  e.currentTarget.style.setProperty("--py",((e.clientY-r.top)/r.height-.5).toFixed(2));
+ };
+ const reset=e=>{e.currentTarget.style.setProperty("--px","0");e.currentTarget.style.setProperty("--py","0")};
+ return <div className={"sonic-sculpture"+(compact?" sonic-compact":"")} onPointerMove={onMove} onPointerLeave={reset} aria-hidden="true">
+  <span className="sonic-halo sonic-halo-one"/><span className="sonic-halo sonic-halo-two"/>
+  <div className="sonic-core">
+   <svg viewBox="0 0 400 400" className="sonic-disc" focusable="false">
+    <defs>
+     <linearGradient id={compact?"sonicLineSmall":"sonicLine"} x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#f1adff"/><stop offset="40%" stopColor="#a980ff"/><stop offset="100%" stopColor="#50d9ff"/></linearGradient>
+     <radialGradient id={compact?"sonicFaceSmall":"sonicFace"}><stop offset="0%" stopColor="#38335a"/><stop offset="57%" stopColor="#171827"/><stop offset="100%" stopColor="#090d19"/></radialGradient>
+    </defs>
+    <circle cx="200" cy="200" r="157" fill={"url(#"+(compact?"sonicFaceSmall":"sonicFace")+")"} stroke="#ffffff18" strokeWidth="1"/>
+    {Array.from({length:10},(_,i)=><circle key={i} cx="200" cy="200" r={65+i*9} fill="none" stroke={i%3===0?"#baa4ff2c":"#ffffff12"} strokeWidth={i%3===0?1.3:.7}/>)}
+    <g className="sonic-wave-ring">{SONIC_BARS.map((b,i)=><line key={i} x1="200" y1={200-b.inner} x2="200" y2={200-b.outer} transform={"rotate("+b.angle+" 200 200)"} stroke={"url(#"+(compact?"sonicLineSmall":"sonicLine")+")"} strokeWidth={i%4===0?2.5:1.3} strokeLinecap="round" opacity={.5+(i%7)*.065} style={{animationDelay:b.delay+"s"}}/>)}</g>
+    <circle cx="200" cy="200" r="61" fill="#121322" stroke="#a084ef72" strokeWidth="1.5"/>
+    <circle cx="200" cy="200" r="40" fill="#211c38" stroke="#ffffff2b"/>
+    <path d="M181 200c0-14 10-25 24-25h8m-26 25c0 14 11 25 25 25h9m-2-50c13 0 23 11 23 25s-10 25-23 25h-9" fill="none" stroke="#cbabff" strokeWidth="5" strokeLinecap="round"/>
+    <path d="M199 188l20 12-20 12z" fill="#eff2ff"/>
+    <circle cx="200" cy="200" r="4" fill="#89dafe"/>
+   </svg>
+   <span className="sonic-core-glint"/>
+  </div>
+  <span className="sonic-coordinate sonic-coordinate-a">ML · FREQ / 001</span>
+  <span className="sonic-coordinate sonic-coordinate-b">CONNECTED BY SOUND</span>
+ </div>
+}
+
 const API=import.meta.env.VITE_API_URL||"http://localhost:4000/api";
 function App(){
  const[token,setToken]=useState(localStorage.getItem("ml_token")||"");
@@ -99,10 +137,10 @@ function App(){
  const detail=(label,value,placeholder)=>input(label.toLowerCase().replaceAll(" ",""),label,value||placeholder||"");
  if(!token)return <div className="auth-layout">
    <section className="auth-visual">
-     <img className="auth-photo" src="https://images.unsplash.com/photo-1634286051376-940ff8525141?auto=format&fit=crop&w=1400&q=82" alt="Recording studio with a microphone and music keyboards" />
+     <div className="auth-sonic"><SonicSculpture/></div>
      <div className="auth-shade"/>
-     <div className="auth-top"><div className="auth-brand">{brand}</div><div className="editorial-no">THE INDEPENDENT CREATIVE NETWORK · EST. 2026</div></div>
-     <div className="auth-feature"><div className="eyebrow light-kicker"><span className="kicker-line"/>AN OPEN SPACE FOR ORIGINAL MUSIC</div><h1>Good music<br/><em>starts together.</em></h1><p>A home for the voices, ideas, and people behind the records.</p><div className="auth-visual-bottom"><span><AudioLines size={19}/> AN INDEPENDENT MUSIC COLLABORATION SPACE</span><span className="visual-index">SIDE A / 001</span></div></div>
+     <div className="auth-top"><div className="auth-brand">{brand}</div><div className="editorial-no">INDEPENDENT MUSIC / CONNECTED WORLDWIDE</div></div>
+     <div className="auth-feature"><div className="eyebrow light-kicker"><span className="kicker-line"/>A NEW FREQUENCY FOR INDEPENDENT MUSIC</div><h1>Find your<br/><em>frequency.</em></h1><p>Where your next song meets the person who helps make it real.</p><div className="auth-visual-bottom"><span><AudioLines size={19}/> AN INDEPENDENT MUSIC COLLABORATION SPACE</span><span className="visual-index">SIDE A / 001</span></div></div>
    </section>
    <section className="auth-pane"><div className="auth-mobile-brand">{brand}</div><div className="auth-box"><div className="eyebrow">WELCOME TO MUSICLINK</div><h2>{authMode==="login"?"Welcome back.":"Make your next connection."}</h2><p>{authMode==="login"?"Sign in to continue.":"Create your profile and connect with musicians."}</p><form onSubmit={sign}>
    {authMode==="register"&&input("displayName","Artist or creator name","How should people know you?",true)}
@@ -127,10 +165,10 @@ function App(){
    <main className="main-area">
      <div className="topbar"><div className="top-left"><span className="topbar-issue">MUSICLINK®</span><span className="topbar-divider">/</span><span>THE INDEPENDENT SOUND NETWORK</span></div><div className="top-right"><span className="topbar-section">EDITION 001 · {pageNo} / 06</span><span className="top-live"><i/>ONLINE</span><button className="top-avatar" style={{background:avatarColor(currentUser)}} onClick={()=>go("My profile")} aria-label="Open your profile">{currentUser.charAt(0).toUpperCase()}</button></div></div>
      <div className="page-body">
-      <div className={"page-heading editorial-heading "+(page==="Projects"||page==="Creators"?"has-feature-art":"")}>
+      <div className={"page-heading editorial-heading sonic-heading "+(page==="Projects"||page==="Creators"?"has-feature-art":"")}>
  <div className="heading-index"><span>{pageNo} / MUSICLINK</span><span>FOR PEOPLE WHO MAKE MUSIC</span></div>
- <div className="heading-row"><div className="heading-copy"><div className="eyebrow"><span className="kicker-line"/>{activeCopy.overline}</div><h1>{activeCopy.heading}<br/><em>{activeCopy.accent}</em></h1><p>{activeCopy.description}</p><div className="heading-lower"><span className="heading-asterisk" aria-hidden="true">✳</span><span>CONNECTION IS THE START OF SOMETHING GOOD.</span>{page==="Projects"&&<button className="btn-primary heading-action" onClick={()=>go("Create project")}>Post a project <ArrowUpRight size={18}/></button>}{page==="Creators"&&<button className="btn-primary heading-action" onClick={()=>go("Create project")}>Start a collaboration <ArrowUpRight size={18}/></button>}</div></div>
- {(page==="Projects"||page==="Creators")&&<div className="editorial-cover" aria-hidden="true"><img src={page==="Projects"?"https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=1000&q=85":"https://images.unsplash.com/photo-1535732850099-99177944f4c5?auto=format&fit=crop&w=900&q=85"} alt=""/><span className="cover-stamp">ML / {pageNo}</span><div className="cover-caption"><AudioLines size={19}/> MAKE MORE TOGETHER</div></div>}
+ <div className="heading-row"><div className="heading-copy"><div className="eyebrow"><span className="kicker-line"/>{activeCopy.overline}</div><h1>{page==="Projects"?<>Make music.<br/><em>Make moves.</em></>:page==="Creators"?<>Meet the minds<br/><em>behind the music.</em></>:<>{activeCopy.heading}<br/><em>{activeCopy.accent}</em></>}</h1><p>{activeCopy.description}</p><div className="heading-lower"><span className="heading-asterisk" aria-hidden="true">✳</span><span>NEW PEOPLE. NEW SOUNDS. NEW POSSIBILITIES.</span>{page==="Projects"&&<button className="btn-primary heading-action" onClick={()=>go("Create project")}>Post a project <ArrowUpRight size={18}/></button>}{page==="Creators"&&<button className="btn-primary heading-action" onClick={()=>go("Create project")}>Start a collaboration <ArrowUpRight size={18}/></button>}</div></div>
+ {(page==="Projects"||page==="Creators")&&<div className="editorial-cover sonic-cover"><SonicSculpture compact/><div className="sonic-cover-footer"><span>CREATIVE ENERGY / ALWAYS ON</span><span>NO TWO SOUNDS ALIKE <ArrowUpRight size={15}/></span></div></div>}
  </div><div className="heading-rule"><span>CREATIVE PEOPLE. REAL PROJECTS.</span><span>SCROLL TO EXPLORE <ArrowRight size={15}/></span></div></div>
       {error&&<div className="message error"><X size={16}/>{error}</div>}{notice&&<div className="message success"><CircleCheck size={17}/>{notice}</div>}
       {page==="Projects"&&<>
@@ -140,7 +178,7 @@ function App(){
  {projects.filter(p=>projectFilter==="mine"?showOwner(p):projectFilter==="all"||p.status==="open").length?<div className="cards project-grid">
  {projects.filter(p=>projectFilter==="mine"?showOwner(p):projectFilter==="all"||p.status==="open").map((p,i)=><article className="project-card" key={p._id}>
  <div className="project-card-top"><span>OPEN CALL / {String(i+1).padStart(2,"0")}</span><span className={"status-dot "+(p.status==="open"?"is-open":"")}>{p.status}</span></div>
- <div className="project-art"><div className="project-art-inner"><AudioLines size={42} strokeWidth={1}/></div><span className="project-art-corner">ML — {String(i+1).padStart(2,"0")}</span></div>
+ <div className="project-art"><span className="project-art-track" aria-hidden="true"/><div className="project-art-inner"><AudioLines size={42} strokeWidth={1}/></div><span className="project-art-corner">ML — {String(i+1).padStart(2,"0")}</span></div>
  <div className="project-meta">{showOwner(p)?"YOUR PROJECT":"BY "+(p.owner?.displayName||"CREATOR")}</div><h3>{p.title}</h3><p>{p.description||"Independent music collaboration."}</p>{badge(p.genres)}
  {p.targetDate&&<p className="project-date"><CalendarDays size={13}/> Target {new Date(p.targetDate).toLocaleDateString()}</p>}
  <div className="card-bottom"><span>{(p.requiredRoles||[]).slice(0,2).join(" · ")||"Open call"}</span><button className="arrow-button" aria-label={"Explore "+p.title} onClick={()=>openProject(p)}><ArrowUpRight size={20}/></button></div>
