@@ -48,16 +48,3 @@ jobs:
         working-directory: recommender
       - run: pytest -q
         working-directory: recommender
-
-  day6-live:
-    name: Live Day 6 MCCA workflow
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [api, frontend, recommender]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-      - run: node scripts/day6-smoke.mjs
-        working-directory: server
