@@ -80,6 +80,7 @@ function App(){
 
  const brand=<span className="brand-lockup"><img className="brand-symbol" src="/musiclink-mark.webp" alt="" aria-hidden="true"/><span className="wordmark">Music<span>Link</span></span></span>;
  const navItems=[["Projects",Compass],["Create project",Plus],["Creators",UsersRound],["My profile",UserRound],["Portfolio",Music2],["Invitations",Mail]];
+ const pageNo=String(Math.max(1,navItems.findIndex(item=>item[0]===page)+1)).padStart(2,"0");
  const pageCopy={
   "Projects":{overline:"PROJECTS",heading:"Find your next",accent:"session.",description:"Browse collaborations from independent musicians."},
   "Create project":{overline:"START SOMETHING",heading:"Put your idea",accent:"out there.",description:"Describe your project and find collaborators."},
@@ -100,8 +101,8 @@ function App(){
    <section className="auth-visual">
      <img className="auth-photo" src="https://images.unsplash.com/photo-1634286051376-940ff8525141?auto=format&fit=crop&w=1400&q=82" alt="Recording studio with a microphone and music keyboards" />
      <div className="auth-shade"/>
-     <div className="auth-top"><div className="auth-brand">{brand}</div><div className="editorial-no">THE NEXT SOUND STARTS HERE</div></div>
-     <div className="auth-feature"><div className="eyebrow light-kicker"><span className="kicker-line"/>THE CREATIVE NETWORK</div><h1>Your sound.<br/><em>Your people.</em></h1><p>Where artists, producers and engineers find their next collaboration.</p><div className="auth-visual-bottom"><span><AudioLines size={19}/> FOR THE PEOPLE BEHIND THE MUSIC</span><span className="visual-index">01 — 03</span></div></div>
+     <div className="auth-top"><div className="auth-brand">{brand}</div><div className="editorial-no">THE INDEPENDENT CREATIVE NETWORK · EST. 2026</div></div>
+     <div className="auth-feature"><div className="eyebrow light-kicker"><span className="kicker-line"/>AN OPEN SPACE FOR ORIGINAL MUSIC</div><h1>Good music<br/><em>starts together.</em></h1><p>A home for the voices, ideas, and people behind the records.</p><div className="auth-visual-bottom"><span><AudioLines size={19}/> AN INDEPENDENT MUSIC COLLABORATION SPACE</span><span className="visual-index">SIDE A / 001</span></div></div>
    </section>
    <section className="auth-pane"><div className="auth-mobile-brand">{brand}</div><div className="auth-box"><div className="eyebrow">WELCOME TO MUSICLINK</div><h2>{authMode==="login"?"Welcome back.":"Make your next connection."}</h2><p>{authMode==="login"?"Sign in to continue.":"Create your profile and connect with musicians."}</p><form onSubmit={sign}>
    {authMode==="register"&&input("displayName","Artist or creator name","How should people know you?",true)}
@@ -115,26 +116,31 @@ function App(){
  return <div className="workspace">
    <button className="mobile-menu" aria-label={navOpen?"Close navigation":"Open navigation"} onClick={()=>setNavOpen(!navOpen)}>{navOpen?<X size={21}/>:<Menu size={21}/>}</button>
    {navOpen&&<button className="mobile-overlay" aria-label="Close navigation" onClick={()=>setNavOpen(false)}/>}
-   <aside className={"sidebar "+(navOpen?"sidebar-open":"")}>
+   <aside className={"sidebar "+(navOpen?"sidebar-open":"")} aria-label="Main navigation">
      <button className="sidebar-brand" onClick={()=>go("Projects")}>{brand}<span>INDEPENDENT MUSIC</span></button>
-     <div className="sidebar-label">YOUR WORKSPACE</div>
+     <div className="sidebar-label">THE MUSIC MAKERS INDEX <span>001 / 006</span></div>
      <nav>{navItems.map(([name,Icon])=><button key={name} className={"nav-item "+(page===name?"active":"")} onClick={()=>go(name)}><Icon size={18} strokeWidth={1.8}/><span>{name}</span>{page===name&&<span className="nav-active-mark"/>}</button>)}</nav>
      <div className="sidebar-bottom">
        <div className="account"><div className="small-avatar" style={{background:avatarColor(currentUser)}}>{currentUser.charAt(0).toUpperCase()}</div><div className="account-label"><strong>{currentUser}</strong><span>{me?.profession||"Independent creator"}</span></div><button onClick={logout} className="logout" aria-label="Sign out" title="Sign out"><LogOut size={18}/></button></div>
      </div>
    </aside>
    <main className="main-area">
-     <div className="topbar"><div className="top-left"><span className="topbar-issue">MUSICLINK / STUDIO</span><span className="topbar-divider">/</span><span>{page}</span></div><div className="top-right"><span className="top-live"><i/>CONNECTED</span><button className="top-avatar" style={{background:avatarColor(currentUser)}} onClick={()=>go("My profile")}>{currentUser.charAt(0).toUpperCase()}</button></div></div>
+     <div className="topbar"><div className="top-left"><span className="topbar-issue">MUSICLINK®</span><span className="topbar-divider">/</span><span>THE INDEPENDENT SOUND NETWORK</span></div><div className="top-right"><span className="topbar-section">EDITION 001 · {pageNo} / 06</span><span className="top-live"><i/>ONLINE</span><button className="top-avatar" style={{background:avatarColor(currentUser)}} onClick={()=>go("My profile")} aria-label="Open your profile">{currentUser.charAt(0).toUpperCase()}</button></div></div>
      <div className="page-body">
-      <div className="page-heading"><div className="eyebrow"><span className="kicker-line"/>{activeCopy.overline}</div><div className="heading-row"><div><h1>{activeCopy.heading}<br/><em>{activeCopy.accent}</em></h1><p>{activeCopy.description}</p></div>{page==="Projects"&&<button className="btn-primary heading-action" onClick={()=>go("Create project")}>Start a project <Plus size={17}/></button>}{page==="Creators"&&<div className="heading-small-art"><img src="https://images.unsplash.com/photo-1535732850099-99177944f4c5?auto=format&fit=crop&w=440&q=80" alt="Live vocal performance"/></div>}</div></div>
+      <div className={"page-heading editorial-heading "+(page==="Projects"||page==="Creators"?"has-feature-art":"")}>
+ <div className="heading-index"><span>{pageNo} / MUSICLINK</span><span>FOR PEOPLE WHO MAKE MUSIC</span></div>
+ <div className="heading-row"><div className="heading-copy"><div className="eyebrow"><span className="kicker-line"/>{activeCopy.overline}</div><h1>{activeCopy.heading}<br/><em>{activeCopy.accent}</em></h1><p>{activeCopy.description}</p><div className="heading-lower"><span className="heading-asterisk" aria-hidden="true">✳</span><span>CONNECTION IS THE START OF SOMETHING GOOD.</span>{page==="Projects"&&<button className="btn-primary heading-action" onClick={()=>go("Create project")}>Post a project <ArrowUpRight size={18}/></button>}{page==="Creators"&&<button className="btn-primary heading-action" onClick={()=>go("Create project")}>Start a collaboration <ArrowUpRight size={18}/></button>}</div></div>
+ {(page==="Projects"||page==="Creators")&&<div className="editorial-cover" aria-hidden="true"><img src={page==="Projects"?"https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=1000&q=85":"https://images.unsplash.com/photo-1535732850099-99177944f4c5?auto=format&fit=crop&w=900&q=85"} alt=""/><span className="cover-stamp">ML / {pageNo}</span><div className="cover-caption"><AudioLines size={19}/> MAKE MORE TOGETHER</div></div>}
+ </div><div className="heading-rule"><span>CREATIVE PEOPLE. REAL PROJECTS.</span><span>SCROLL TO EXPLORE <ArrowRight size={15}/></span></div></div>
       {error&&<div className="message error"><X size={16}/>{error}</div>}{notice&&<div className="message success"><CircleCheck size={17}/>{notice}</div>}
       {page==="Projects"&&<>
+ <div className="editorial-marquee" aria-hidden="true"><div className="marquee-track">{Array.from({length:4},(_,i)=><span key={i}>CREATORS <b>✳</b> COLLABORATION <b>✳</b> NEW SOUNDS <b>✳</b> NO BOUNDARIES <b>✳</b></span>)}</div></div>
  <div className="project-tabs"><button className={projectFilter==="open"?"selected":""} onClick={()=>setProjectFilter("open")}>Open projects</button><button className={projectFilter==="mine"?"selected":""} onClick={()=>setProjectFilter("mine")}>My projects</button><button className={projectFilter==="all"?"selected":""} onClick={()=>setProjectFilter("all")}>All projects</button></div>
  <div className="section-heading"><div><span className="section-index">PROJECT BOARD</span><h2>{projectFilter==="mine"?"Your projects":projectFilter==="all"?"All collaborations":"Open collaborations"} <span className="count-number">{projects.filter(p=>projectFilter==="mine"?showOwner(p):projectFilter==="all"||p.status==="open").length}</span></h2></div></div>
  {projects.filter(p=>projectFilter==="mine"?showOwner(p):projectFilter==="all"||p.status==="open").length?<div className="cards project-grid">
  {projects.filter(p=>projectFilter==="mine"?showOwner(p):projectFilter==="all"||p.status==="open").map((p,i)=><article className="project-card" key={p._id}>
- <div className="project-card-top"><span>PROJECT / {String(i+1).padStart(2,"0")}</span><span className={"status-dot "+(p.status==="open"?"is-open":"")}>{p.status}</span></div>
- <div className="project-art"><div className="project-art-inner"><AudioLines size={42} strokeWidth={1}/></div></div>
+ <div className="project-card-top"><span>OPEN CALL / {String(i+1).padStart(2,"0")}</span><span className={"status-dot "+(p.status==="open"?"is-open":"")}>{p.status}</span></div>
+ <div className="project-art"><div className="project-art-inner"><AudioLines size={42} strokeWidth={1}/></div><span className="project-art-corner">ML — {String(i+1).padStart(2,"0")}</span></div>
  <div className="project-meta">{showOwner(p)?"YOUR PROJECT":"BY "+(p.owner?.displayName||"CREATOR")}</div><h3>{p.title}</h3><p>{p.description||"Independent music collaboration."}</p>{badge(p.genres)}
  {p.targetDate&&<p className="project-date"><CalendarDays size={13}/> Target {new Date(p.targetDate).toLocaleDateString()}</p>}
  <div className="card-bottom"><span>{(p.requiredRoles||[]).slice(0,2).join(" · ")||"Open call"}</span><button className="arrow-button" aria-label={"Explore "+p.title} onClick={()=>openProject(p)}><ArrowUpRight size={20}/></button></div>
