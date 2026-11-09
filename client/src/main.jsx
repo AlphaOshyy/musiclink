@@ -91,7 +91,7 @@ function App(){
  };
  const activeCopy=pageCopy[page]||pageCopy.Projects;
  const currentUser=me?.displayName||"Creator";
- const avatarColor=(name)=>["var(--photo-1)","var(--photo-2)","var(--photo-3)","var(--photo-4)"][Array.from(name||"A").reduce((s,c)=>s+c.charCodeAt(0),0)%4];
+ const avatarColor=(name)=>["linear-gradient(135deg,#7141f2,#0aa3e0)","linear-gradient(135deg,#b044f0,#5359e0)","linear-gradient(135deg,#226ad8,#1dc6e8)","linear-gradient(135deg,#6835be,#cc4dc7)"][Array.from(name||"A").reduce((s,c)=>s+c.charCodeAt(0),0)%4];
  const badge=(items)=><div className="chips">{(items||[]).slice(0,5).map((x,i)=><span key={x+i}>{x}</span>)}</div>;
  const showOwner=(p)=>String(p.owner?._id||p.owner)===me?.id;
  const empty=(icon,title,description,buttonLabel,onClick)=><div className="empty-state"><div className="empty-icon">{icon}</div><h3>{title}</h3><p>{description}</p>{buttonLabel&&<button className="btn-outline" onClick={onClick}>{buttonLabel}<ArrowUpRight size={16}/></button>}</div>;
@@ -100,8 +100,8 @@ function App(){
    <section className="auth-visual">
      <img className="auth-photo" src="https://images.unsplash.com/photo-1634286051376-940ff8525141?auto=format&fit=crop&w=1400&q=82" alt="Recording studio with a microphone and music keyboards" />
      <div className="auth-shade"/>
-     <div className="auth-top"><div className="auth-brand">{brand}</div><div className="editorial-no">VOL. 01 / THE COLLABORATION SPACE</div></div>
-     <div className="auth-feature"><div className="eyebrow light-kicker"><span className="kicker-line"/>MADE FOR THE MUSIC</div><h1>Make music.<br/><em>Find your people.</em></h1><p>A place for independent music collaboration.</p><div className="auth-visual-bottom"><span><AudioLines size={19}/> FOR THE PEOPLE BEHIND THE MUSIC</span><span className="visual-index">01 — 03</span></div></div>
+     <div className="auth-top"><div className="auth-brand">{brand}</div><div className="editorial-no">THE NEXT SOUND STARTS HERE</div></div>
+     <div className="auth-feature"><div className="eyebrow light-kicker"><span className="kicker-line"/>THE CREATIVE NETWORK</div><h1>Your sound.<br/><em>Your people.</em></h1><p>Where artists, producers and engineers find their next collaboration.</p><div className="auth-visual-bottom"><span><AudioLines size={19}/> FOR THE PEOPLE BEHIND THE MUSIC</span><span className="visual-index">01 — 03</span></div></div>
    </section>
    <section className="auth-pane"><div className="auth-mobile-brand">{brand}</div><div className="auth-box"><div className="eyebrow">WELCOME TO MUSICLINK</div><h2>{authMode==="login"?"Welcome back.":"Make your next connection."}</h2><p>{authMode==="login"?"Sign in to continue.":"Create your profile and connect with musicians."}</p><form onSubmit={sign}>
    {authMode==="register"&&input("displayName","Artist or creator name","How should people know you?",true)}
@@ -124,7 +124,7 @@ function App(){
      </div>
    </aside>
    <main className="main-area">
-     <div className="topbar"><div className="top-left"><span className="topbar-issue">MUSICLINK / CREATOR SPACE</span><span className="topbar-divider">/</span><span>{page}</span></div><div className="top-right"><span className="top-live"><i/>CONNECTED</span><button className="top-avatar" style={{background:avatarColor(currentUser)}} onClick={()=>go("My profile")}>{currentUser.charAt(0).toUpperCase()}</button></div></div>
+     <div className="topbar"><div className="top-left"><span className="topbar-issue">MUSICLINK / STUDIO</span><span className="topbar-divider">/</span><span>{page}</span></div><div className="top-right"><span className="top-live"><i/>CONNECTED</span><button className="top-avatar" style={{background:avatarColor(currentUser)}} onClick={()=>go("My profile")}>{currentUser.charAt(0).toUpperCase()}</button></div></div>
      <div className="page-body">
       <div className="page-heading"><div className="eyebrow"><span className="kicker-line"/>{activeCopy.overline}</div><div className="heading-row"><div><h1>{activeCopy.heading}<br/><em>{activeCopy.accent}</em></h1><p>{activeCopy.description}</p></div>{page==="Projects"&&<button className="btn-primary heading-action" onClick={()=>go("Create project")}>Start a project <Plus size={17}/></button>}{page==="Creators"&&<div className="heading-small-art"><img src="https://images.unsplash.com/photo-1535732850099-99177944f4c5?auto=format&fit=crop&w=440&q=80" alt="Live vocal performance"/></div>}</div></div>
       {error&&<div className="message error"><X size={16}/>{error}</div>}{notice&&<div className="message success"><CircleCheck size={17}/>{notice}</div>}
