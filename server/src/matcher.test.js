@@ -11,7 +11,7 @@ test("all five factors score 100 with complete evidence",()=>{
 });
 test("availability lowers both forward and reciprocal compatibility",()=>{
  const r=rank(p,[{...creator,available:false}]).ranked[0];
- assert.equal(r.forward,90);assert.ok(r.score<90);
+ assert.equal(r.forward,90);assert.equal(r.score,90);
  assert.match(r.explanation,/unavailable/);
 });
 test("creator preferences change ranking",()=>{

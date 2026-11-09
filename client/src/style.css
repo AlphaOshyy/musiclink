@@ -150,3 +150,21 @@ body,.workspace{background:var(--bg)}
 .application-status{text-transform:uppercase;font-size:10px!important;font-weight:800;letter-spacing:.08em;border-radius:4px;padding:7px 9px;background:#eaf0e9;color:#476a4c!important}
 .application-status.status-rejected{background:#f4e7e5;color:#a45647!important}
 .application-status.status-pending{background:#f4efe4;color:#8a7240!important}
+
+/* Day 6 recommendation explainability */
+.rec-overview{display:flex;gap:26px;align-items:center;flex-wrap:wrap;background:#fff;border:1px solid #dfe5dc;padding:22px 24px;margin:20px 0 14px;border-radius:5px}
+.rec-overview>div:first-child{flex:1;min-width:220px}
+.rec-overview h3{margin:6px 0;font-size:19px;color:#273c2d}
+.rec-overview p{font-size:12px;margin:0;max-width:470px;color:#657768}
+.rec-overview-stat{min-width:93px;display:grid;gap:3px}
+.rec-overview-stat strong{font-size:27px;color:#293f2d;line-height:1.1}
+.rec-overview-stat span{font-size:9px;letter-spacing:.08em;color:#829083}
+.rec-method{display:flex;flex-direction:column;gap:5px;margin-bottom:18px;color:#687a6b;font-size:11px}
+.rec-profession{color:#627668}
+.factor-list{display:grid;gap:11px;border-top:1px solid #e6eae4;border-bottom:1px solid #e6eae4;padding:18px 0;margin:17px 0}
+.factor-row{display:grid;grid-template-columns:110px 1fr 38px;gap:12px;align-items:center;font-size:11px;color:#5a7160}
+.factor-row strong{font-weight:700;font-size:11px;text-align:right;color:#2f4c36}
+.factor-bar{height:6px;background:#e4ece3;border-radius:6px;overflow:hidden}
+.factor-bar>div{height:100%;background:#759b7c;border-radius:6px}
+.rec-evidence{font-size:11px!important;color:#849185!important}
+@media(max-width:650px){.rec-overview{gap:15px;padding:18px}.factor-row{grid-template-columns:100px 1fr 34px;gap:7px}}
