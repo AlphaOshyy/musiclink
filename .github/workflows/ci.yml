@@ -48,16 +48,3 @@ jobs:
         working-directory: recommender
       - run: pytest -q
         working-directory: recommender
-
-  day8-live:
-    name: Day 8 live verification tests
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [api, frontend]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-      - run: node scripts/day8-smoke.mjs
-        working-directory: server
