@@ -812,3 +812,33 @@ h1,h2,h3,.brand-lockup .wordmark{font-family:'Syne','Space Grotesk',sans-serif}
 .invite-status.status-pending{background:#383023;color:#f4d39e;border-color:#655238}
 .invite-status.status-declined{background:#3d252f;color:#ffbdc8;border-color:#794558}
 @media(max-width:650px){.shortlist-person{flex-wrap:wrap;padding:15px}.shortlist-actions{width:100%;margin-left:0}.invite-item{flex-wrap:wrap}.invite-actions{width:100%;margin-left:0}.invite-item .invite-copy{min-width:calc(100% - 85px)}}
+
+/* Day 8 / artist ownership review UI */
+.artist-verified{display:inline-flex;gap:5px;align-items:center;vertical-align:middle;font-family:'DM Sans',sans-serif;font-size:10px!important;letter-spacing:.02em;color:#bbaaff!important;font-weight:800;white-space:nowrap}
+.artist-verified svg{color:#ae92fa;flex-shrink:0}
+.verification-panel,.verification-admin{background:#19181f;border:1px solid #50485b;padding:clamp(20px,3vw,35px);margin-top:24px}
+.verification-panel .form-head p,.verification-admin>p{color:#bbb2c0;font-size:12px}
+.verification-panel h2{font-size:28px;color:#f3eefa}
+.verification-form{margin-top:25px}
+.verification-terms{font-size:12px;color:#b8b1c2}
+.verification-pending{border:1px solid #655276;padding:22px;margin-top:20px;background:#211b2b}
+.verify-status{font-size:10px;letter-spacing:.08em;display:flex;align-items:center;gap:7px;color:#ead1ff}
+.verification-pending h3{font-size:21px;margin:15px 0 8px}
+.verification-pending p,.verified-approved p{font-size:12px;color:#b9b1c0;overflow-wrap:anywhere}
+.verification-pending a,.verify-review a{color:#d4baff;overflow-wrap:anywhere}
+.verify-proof{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#100e17;border:1px dashed #765a93;padding:13px;margin:15px 0}
+.verify-proof code{font-size:14px;letter-spacing:.04em;color:#ebd9ff;overflow-wrap:anywhere}
+.verified-approved{display:flex;gap:15px;align-items:start;background:#211a36;border:1px solid #6a5198;padding:20px;margin-top:19px;color:#cdb9ff}
+.verified-approved strong{font-size:15px}
+.verified-approved p{margin:8px 0 0}
+.verify-rejection{background:#39242e;border:1px solid #90576e;padding:13px;color:#ffd5df!important}
+.verify-review{background:#1b1a22;border:1px solid #534960;margin:18px 0;padding:25px}
+.verify-review-top{display:flex;align-items:center;justify-content:space-between}
+.verify-review h3{font-size:24px;margin:13px 0}
+.verify-review p{font-size:12px;color:#b6acbb;overflow-wrap:anywhere}
+.verify-review a{display:inline-flex;align-items:center;gap:7px}
+.verify-checkbox{display:flex;align-items:start;gap:10px;color:#ddd0e8;font-size:12px;margin:20px 0}
+.verify-checkbox input{accent-color:#aa7af3;width:17px;height:17px}
+.verify-review-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.verify-review-actions button:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:650px){.verification-panel,.verification-admin,.verify-review{padding:17px}.verify-proof code{font-size:11px}.verified-approved{flex-wrap:wrap}.verify-review-actions{flex-direction:column}.verify-review-actions button{width:100%}}
