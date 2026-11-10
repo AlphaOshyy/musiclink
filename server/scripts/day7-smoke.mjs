@@ -1,0 +1,45 @@
+import assert from "node:assert/strict";
+import {randomBytes} from "node:crypto";
+const base="https://musiclink-api.vercel.app/api";
+const nonce=randomBytes(10).toString("hex"),password=randomBytes(26).toString("base64url");
+async function call(path,method="GET",body=null,token=""){
+ const response=await fetch(base+path,{method,headers:{"Content-Type":"application/json",...(token?{Authorization:"Bearer "+token}:{})},body:body===null?undefined:JSON.stringify(body),signal:AbortSignal.timeout(35000)});
+ return {code:response.status,data:await response.json().catch(()=>({}))};
+}
+const signup=async(name)=>{
+ const r=await call("/auth/register","POST",{email:"ci-day7-"+nonce+"-"+name.toLowerCase()+"@example.invalid",password,displayName:name});
+ assert.equal(r.code,201,"Temporary user registration");
+ return r.data;
+};
+const owner=await signup("Owner"),creator=await signup("Creator"),stranger=await signup("Stranger");
+const project=await call("/projects","POST",{title:"Day7 Invitation Test",description:"Temporary integration test",genres:["Trap"],requiredRoles:["Singer"]},owner.token);
+assert.equal(project.code,201);
+const id=project.data._id,cid=creator.user.id;
+assert.equal((await call("/projects/"+id+"/shortlist","GET",null,creator.token)).code,403,"Private shortlist");
+assert.equal((await call("/projects/"+id+"/invite","POST",{receiverId:cid},owner.token)).code,403,"Cannot invite without shortlist");
+const blind=await call("/projects/"+id+"/recommendations?mode=blind","GET",null,owner.token);
+assert.equal(blind.code,200,"Blind recommendations");
+assert.ok(blind.data.ranked.length>=2);
+const candidate=await call("/projects/"+id+"/shortlist","POST",{candidateId:cid},owner.token);
+assert.equal(candidate.code,200,"Owner shortlists candidate");
+const list=await call("/projects/"+id+"/shortlist","GET",null,owner.token);
+assert.equal(list.code,200);assert.ok(list.data.some(x=>x.id===cid&&x.invitationStatus==="not_sent"));
+assert.equal((await call("/projects/"+id+"/shortlist/"+cid,"DELETE",null,stranger.token)).code,403,"Other users cannot remove shortlist");
+const invite=await call("/projects/"+id+"/invite","POST",{receiverId:cid},owner.token);
+assert.equal(invite.code,201,"Invitation created");
+assert.equal((await call("/projects/"+id+"/invite","POST",{receiverId:cid},owner.token)).code,409,"Duplicate invitation blocked");
+assert.equal((await call("/projects/"+id+"/shortlist/"+cid,"DELETE",null,owner.token)).code,409,"Cannot remove pending invite");
+const sent=await call("/me/sent-invitations","GET",null,owner.token);
+assert.equal(sent.code,200);assert.ok(sent.data.some(x=>x._id===invite.data._id&&x.status==="pending"));
+const received=await call("/invitations","GET",null,creator.token);
+assert.equal(received.code,200);assert.ok(received.data.some(x=>x._id===invite.data._id));
+assert.equal((await call("/invitations/"+invite.data._id,"PATCH",{status:"accepted"},stranger.token)).code,403,"Only receiver answers");
+assert.equal((await call("/invitations/"+invite.data._id,"PATCH",{status:"pending"},creator.token)).code,400,"Invalid status rejected");
+const answered=await call("/invitations/"+invite.data._id,"PATCH",{status:"accepted"},creator.token);
+assert.equal(answered.code,200);assert.equal(answered.data.status,"accepted");
+assert.equal((await call("/invitations/"+invite.data._id,"PATCH",{status:"declined"},creator.token)).code,409,"No second answer");
+assert.equal((await call("/projects/"+id+"/shortlist/"+cid,"DELETE",null,owner.token)).code,409,"Accepted invitation locks shortlist");
+const sentUpdated=await call("/me/sent-invitations","GET",null,owner.token);
+assert.equal(sentUpdated.code,200);
+assert.equal(sentUpdated.data.find(x=>x._id===invite.data._id)?.status,"accepted");
+console.log("PASS DAY7 invitation ownership, shortlist, blind review, sent inbox, acceptance, duplicate prevention and immutable replies.");
