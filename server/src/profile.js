@@ -54,7 +54,7 @@ export function profileCompleteness(u){
 }
 import {publicVerification} from "./verification.js";
 export function publicProfile(u){
- return {id:String(u._id),...publicVerification(u),...(u.role?{role:u.role}:{}),displayName:u.displayName,profession:u.profession,avatarUrl:u.avatarUrl||"",genres:u.genres||[],skills:u.skills||[],creativeTags:u.creativeTags||[],available:u.available===true,bio:u.bio||"",portfolio:u.portfolio||[],preferredRoles:u.preferredRoles||[],preferredGenres:u.preferredGenres||[],preferredTags:u.preferredTags||[],completeness:profileCompleteness(u)};
+ return {id:String(u._id),...publicVerification(u),displayName:u.displayName,profession:u.profession,avatarUrl:u.avatarUrl||"",genres:u.genres||[],skills:u.skills||[],creativeTags:u.creativeTags||[],available:u.available===true,bio:u.bio||"",portfolio:u.portfolio||[],preferredRoles:u.preferredRoles||[],preferredGenres:u.preferredGenres||[],preferredTags:u.preferredTags||[],completeness:profileCompleteness(u)};
 }
 export function creatorSearch(query){
  if(!isRecord(query))return {error:"Invalid search."};

@@ -86,7 +86,7 @@ app.get("/api/me",auth,asyncRoute(async(req,res)=>{
   res.setHeader("Cache-Control","no-store");
   const user=await mine(req.auth.id);
   if(!user)return sendError(res,401,"Account unavailable.");
-  res.json(publicProfile(user));
+  res.json({...publicProfile(user),role:user.role});
 }));
 
 app.put("/api/me",auth,asyncRoute(async(req,res)=>{
