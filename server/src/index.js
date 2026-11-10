@@ -11,6 +11,7 @@ import { User, Project, Application, Invitation } from "./models.js";
 import { rank, evaluateRanking } from "./matcher.js";
 import { publicProfile, validateProfile, validatePortfolio, creatorSearch } from "./profile.js";
 import { validateProject, validateApplication, validateProjectQuery } from "./projects.js";
+import { canRespond, canInvite, canRemoveShortlist } from "./invitation-policy.js";
 
 const app = express();
 app.use(helmet());
@@ -208,23 +209,63 @@ app.patch("/api/applications/:id",auth,asyncRoute(async(req,res)=>{
  application.status=req.body.status;await application.save();res.json(application);
 }));
 app.get("/api/invitations",auth,asyncRoute(async(req,res)=>{
-  const invites=await Invitation.find({receiver:req.auth.id}).populate("project","title").populate("sender","displayName");
-  res.json(invites);
+ const invites=await Invitation.find({receiver:req.auth.id}).sort({createdAt:-1}).limit(100)
+  .populate("project","title status").populate("sender","displayName profession");
+ res.setHeader("Cache-Control","private, no-store");
+ res.json(invites);
+}));
+app.get("/api/me/sent-invitations",auth,asyncRoute(async(req,res)=>{
+ const invites=await Invitation.find({sender:req.auth.id}).sort({createdAt:-1}).limit(100)
+  .populate("project","title status owner").populate("receiver","displayName profession avatarUrl");
+ res.setHeader("Cache-Control","private, no-store");
+ res.json(invites);
+}));
+app.get("/api/projects/:id/shortlist",auth,asyncRoute(async(req,res)=>{
+ if(!idOk(req.params.id))return sendError(res,400,"Invalid project.");
+ const project=await Project.findById(req.params.id);
+ if(!project||String(project.owner)!==req.auth.id)return sendError(res,403,"Only the owner may view the shortlist.");
+ const candidates=await User.find({_id:{$in:project.shortlist}})
+  .select("displayName profession avatarUrl genres available").lean();
+ const statuses=await Invitation.find({project:project._id}).select("receiver status").lean();
+ const statusById=new Map(statuses.map(x=>[String(x.receiver),x.status]));
+ const ranked=new Map(project.shortlist.map((id,index)=>[String(id),index]));
+ candidates.sort((x,y)=>ranked.get(String(x._id))-ranked.get(String(y._id)));
+ res.setHeader("Cache-Control","private, no-store");
+ res.json(candidates.map(u=>({id:String(u._id),displayName:u.displayName,profession:u.profession,
+  avatarUrl:u.avatarUrl||"",genres:u.genres||[],available:u.available,
+  invitationStatus:statusById.get(String(u._id))||"not_sent"})));
 }));
 app.post("/api/projects/:id/invite",auth,asyncRoute(async(req,res)=>{
-  if(!idOk(req.params.id)||!idOk(req.body.receiverId))return sendError(res,400,"Invalid IDs.");
-  const project=await Project.findById(req.params.id);
-  if(!project||String(project.owner)!==req.auth.id)return sendError(res,403,"Only the owner may invite.");
-  if(!project.shortlist.some(id=>String(id)===req.body.receiverId))return sendError(res,403,"Shortlist the candidate first.");
-  const invite=await Invitation.findOneAndUpdate({project:project._id,receiver:req.body.receiverId},{$setOnInsert:{sender:req.auth.id,status:"pending"}},{upsert:true,new:true,setDefaultsOnInsert:true});
+ if(!idOk(req.params.id)||!idOk(req.body?.receiverId))return sendError(res,400,"Invalid IDs.");
+ if(Object.keys(req.body).some(k=>k!=="receiverId"))return sendError(res,400,"Unsupported invitation details.");
+ const project=await Project.findById(req.params.id);
+ const check=canInvite(project,req.auth.id,req.body.receiverId);
+ if(check.error)return sendError(res,check.status,check.error);
+ if(!await User.exists({_id:req.body.receiverId}))return sendError(res,404,"Creator not found.");
+ if(await Invitation.exists({project:project._id,receiver:req.body.receiverId}))
+  return sendError(res,409,"Invitation already sent. Check its status.");
+ try{
+  const invite=await Invitation.create({project:project._id,sender:req.auth.id,receiver:req.body.receiverId});
   res.status(201).json(invite);
+ }catch(error){
+  if(error.code===11000)return sendError(res,409,"Invitation already sent.");
+  throw error;
+ }
 }));
 app.patch("/api/invitations/:id",auth,asyncRoute(async(req,res)=>{
-  if(!idOk(req.params.id))return sendError(res,400,"Invalid invitation.");
-  const invite=await Invitation.findById(req.params.id);
-  if(!invite||String(invite.receiver)!==req.auth.id)return sendError(res,403,"Invitation unavailable.");
-  if(!["accepted","declined"].includes(req.body.status))return sendError(res,400,"Invalid status.");
-  invite.status=req.body.status;await invite.save();res.json(invite);
+ if(!idOk(req.params.id))return sendError(res,400,"Invalid invitation.");
+ if(!req.body||!["accepted","declined"].includes(req.body.status)||Object.keys(req.body).some(k=>k!=="status"))
+  return sendError(res,400,"Invalid invitation response.");
+ const updated=await Invitation.findOneAndUpdate(
+  {_id:req.params.id,receiver:req.auth.id,status:"pending"},
+  {$set:{status:req.body.status}},
+  {new:true,runValidators:true}
+ );
+ if(updated)return res.json(updated);
+ const invite=await Invitation.findById(req.params.id);
+ const check=canRespond(invite,req.auth.id,req.body.status);
+ if(check.error)return sendError(res,check.status,check.error);
+ return sendError(res,409,"This invitation has already been answered.");
 }));
 app.get("/api/projects/:id/recommendations",auth,asyncRoute(async(req,res)=>{
  if(!idOk(req.params.id))return sendError(res,400,"Invalid project.");
@@ -268,6 +309,17 @@ app.post("/api/projects/:id/shortlist",auth,asyncRoute(async(req,res)=>{
   if(String(project.owner)===candidateId||!await User.exists({_id:candidateId}))return sendError(res,400,"Invalid candidate.");
   if(!project.shortlist.some(id=>String(id)===candidateId))project.shortlist.push(candidateId);
   await project.save();res.json({shortlist:project.shortlist});
+}));
+app.delete("/api/projects/:id/shortlist/:candidateId",auth,asyncRoute(async(req,res)=>{
+ if(!idOk(req.params.id)||!idOk(req.params.candidateId))return sendError(res,400,"Invalid IDs.");
+ const project=await Project.findById(req.params.id);
+ const check=canRemoveShortlist(project,req.auth.id,req.params.candidateId);
+ if(check.error)return sendError(res,check.status,check.error);
+ if(await Invitation.exists({project:project._id,receiver:req.params.candidateId,status:{$in:["pending","accepted"]}}))
+  return sendError(res,409,"Resolve the active invitation before removing this creator.");
+ project.shortlist=project.shortlist.filter(id=>String(id)!==req.params.candidateId);
+ await project.save();
+ res.json({shortlist:project.shortlist});
 }));
 app.use((err,req,res,next)=>{
   console.error(err);
