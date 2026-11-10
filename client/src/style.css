@@ -793,3 +793,22 @@ h1,h2,h3,.brand-lockup .wordmark{font-family:'Syne','Space Grotesk',sans-serif}
  .project-card:hover,.creator-card:hover,.match-card:hover{transform:none}
  .editorial-cover>img{transition:none}
 }
+
+/* Day 7: editorial shortlists and invitation inbox */
+.shortlist-section{margin:32px 0 43px}
+.shortlist-list{display:grid;gap:10px}
+.shortlist-person{display:flex;gap:15px;align-items:center;background:#1c1b20;border:1px solid #403a48;padding:18px 20px}
+.shortlist-person .small-avatar{flex:0 0 46px;height:46px;width:46px;border-radius:0;overflow:hidden;display:grid;place-items:center}
+.shortlist-person .small-avatar img{height:100%;width:100%;object-fit:cover}
+.shortlist-info{display:grid;gap:5px;flex:1;min-width:120px}
+.shortlist-info strong{color:#f5f0f7;font-size:13px}
+.shortlist-info span{color:#aaa2b2;font-size:11px}
+.shortlist-actions{display:flex;flex-wrap:wrap;gap:8px;margin-left:auto}
+.shortlist-actions .btn-primary,.shortlist-actions .btn-outline{padding:10px 14px;font-size:11px}
+.invite-tabs{margin-bottom:30px}
+.invite-item .invite-copy{flex:1;min-width:160px}
+.invite-status{white-space:nowrap;border:1px solid #5c506c;color:#d2bee7;background:#2a2435;font-size:10px;letter-spacing:.05em;font-weight:700;text-transform:uppercase;padding:8px 10px}
+.invite-status.status-accepted{background:#16382e;color:#9ae0bf;border-color:#2c654a}
+.invite-status.status-pending{background:#383023;color:#f4d39e;border-color:#655238}
+.invite-status.status-declined{background:#3d252f;color:#ffbdc8;border-color:#794558}
+@media(max-width:650px){.shortlist-person{flex-wrap:wrap;padding:15px}.shortlist-actions{width:100%;margin-left:0}.invite-item{flex-wrap:wrap}.invite-actions{width:100%;margin-left:0}.invite-item .invite-copy{min-width:calc(100% - 85px)}}
