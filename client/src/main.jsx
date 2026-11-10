@@ -36,6 +36,7 @@ function App(){
  const[verification,setVerification]=useState(null);
  const[verificationForm,setVerificationForm]=useState({platform:"website",artistName:"",officialUrl:"",notes:""});
  const[verificationQueue,setVerificationQueue]=useState([]);
+ const[verificationQueueStatus,setVerificationQueueStatus]=useState("pending");
  const[reviewNotes,setReviewNotes]=useState({});
  const[reviewConfirmed,setReviewConfirmed]=useState({});
  const[verifyBusy,setVerifyBusy]=useState(false);
@@ -48,7 +49,7 @@ function App(){
  };
  const safe=async(fn)=>{try{setError("");setNotice("");await fn()}catch(e){setError(e.message)}};
  const refresh=async()=>{const [u,p,c,i,a,s,v]=await Promise.all([request("/me"),request("/projects"),request("/creators"),request("/invitations"),request("/me/applications"),request("/me/sent-invitations"),request("/verification/mine")]);setMe(u);setProjects(p);setCreators(c);setInvites(i);setMyApplications(a);setSentInvites(s);setVerification(v);
- if(u.role==="admin"){setVerificationQueue(await request("/verification/admin/queue"));}else setVerificationQueue([]);
+ if(u.role==="admin"){setVerificationQueue(await request("/verification/admin/queue?status="+verificationQueueStatus));}else setVerificationQueue([]);
 };
  useEffect(()=>{if(token)refresh().catch(e=>{if(e.status===401){localStorage.removeItem("ml_token");setToken("");setMe(null)}else{setError("Unable to connect. Your session is still saved. Please refresh the page.")}})},[token]);
  const sign=async(e)=>{e.preventDefault();if(authBusy)return;setAuthBusy(true);try{await safe(async()=>{if(authMode==="register"&&form.password!==form.confirmPassword)throw new Error("Passwords do not match.");const {confirmPassword,...details}=form;const result=await request("/auth/"+authMode,{method:"POST",body:JSON.stringify(details)});localStorage.setItem("ml_token",result.token);setToken(result.token);setForm({})})}finally{setAuthBusy(false)}};
@@ -90,12 +91,14 @@ function App(){
   await request("/verification/request",{method:"POST",body:JSON.stringify({artistName:verificationForm.artistName.trim(),platform:verificationForm.platform,officialUrl:verificationForm.officialUrl.trim(),notes:verificationForm.notes.trim()})});
   setVerification(await request("/verification/mine"));setNotice("Request submitted. Add the ownership code to your official channel or page for review.");
  })}finally{setVerifyBusy(false)}};
+ const chooseReviewQueue=async(status)=>{await safe(async()=>{setVerificationQueueStatus(status);setVerificationQueue(await request("/verification/admin/queue?status="+status))})};
  const reviewVerification=async(item,decision)=>{await safe(async()=>{
   const body={decision,confirmedOwnership:reviewConfirmed[item.id]===true,reason:(reviewNotes[item.id]||"").trim()};
   await request("/verification/admin/"+item.id,{method:"PATCH",body:JSON.stringify(body)});
-  setVerificationQueue(await request("/verification/admin/queue"));await refresh();
+  setVerificationQueue(await request("/verification/admin/queue?status="+verificationQueueStatus));await refresh();
   setNotice("Verification "+(decision==="approve"?"approved.":"rejected."));
  })};
+ const revokeVerification=async(item)=>{await safe(async()=>{const reason=(reviewNotes[item.id]||"").trim();await request("/verification/admin/"+item.id+"/revoke",{method:"POST",body:JSON.stringify({reason})});setVerificationQueue(await request("/verification/admin/queue?status=approved"));await refresh();setNotice("Artist badge revoked.")})};
  const logout=()=>{localStorage.removeItem("ml_token");setToken("");setMe(null);setVerification(null);setVerificationQueue([])};
  const featureTrack=async(id)=>{await safe(async()=>{await request("/me/portfolio/"+id+"/feature",{method:"PATCH"});await refresh();setNotice("Featured track updated.")})};
  const beginEditTrack=(track)=>{setEditTrack(track._id);setForm({title:track.title,url:track.url,genres:(track.genres||[]).join(", "),tags:(track.tags||[]).join(", "),description:track.description||"",role:track.role||"",releaseYear:track.releaseYear||""});setPlaying(null)};
@@ -218,11 +221,11 @@ function App(){
  <div className="full verification-terms">After requesting verification, add the generated proof code to your official page. An administrator must independently review ownership.</div>
  <button className="btn-primary" disabled={verifyBusy}>{verifyBusy?"Submitting...":"Request verification"} <ArrowRight size={15}/></button></div></form>}
  </section></div>}
-      {page==="Verify artists"&&me?.role==="admin"&&<section className="verification-admin"><div className="section-heading"><div><span className="section-index">PENDING REQUESTS</span><h2>Review official ownership <span className="count-number">{verificationQueue.length}</span></h2></div></div><p>Only approve when you independently confirm the listed artist controls the official page and the unique code appears there. Do not approve links alone.</p>
- {verificationQueue.length?verificationQueue.map(item=><article className="verify-review" key={item.id}><div className="verify-review-top"><span className="section-index">ARTIST IDENTITY REQUEST</span><span className="pill status-pending">PENDING</span></div><h3>{item.artistName}</h3><p>Requested by {item.artist?.displayName} ({item.artist?.email})</p><p>Platform: {item.platform}</p><p><a href={item.officialUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={14}/> Open claimed official page</a></p><div className="verify-proof"><code>{item.proofCode}</code></div>{item.notes&&<p>Artist notes: {item.notes}</p>}
- <label className="verify-checkbox"><input type="checkbox" checked={!!reviewConfirmed[item.id]} onChange={e=>setReviewConfirmed(v=>({...v,[item.id]:e.target.checked}))}/> I checked the official account independently and confirmed this proof code is publicly displayed.</label>
- <label className="field"><span>Review notes. Required for rejection.</span><textarea maxLength={500} value={reviewNotes[item.id]||""} onChange={e=>setReviewNotes(v=>({...v,[item.id]:e.target.value}))} placeholder="Document ownership confirmation or why the request is rejected."/></label>
- <div className="verify-review-actions"><button className="btn-primary" disabled={!reviewConfirmed[item.id]} onClick={()=>reviewVerification(item,"approve")}>Approve verified artist <BadgeCheck size={16}/></button><button className="btn-outline" disabled={!(reviewNotes[item.id]||"").trim()} onClick={()=>reviewVerification(item,"reject")}>Reject request</button></div></article>):empty(<ShieldCheck size={26}/>,"No pending verification requests.","New requests appear here when artists submit them.")}
+      {page==="Verify artists"&&me?.role==="admin"&&<section className="verification-admin"><div className="section-heading"><div><span className="section-index">PENDING REQUESTS</span><h2>Review official ownership <span className="count-number">{verificationQueue.length}</span></h2></div></div><div className="project-tabs"><button className={verificationQueueStatus==="pending"?"selected":""} onClick={()=>chooseReviewQueue("pending")}>Pending</button><button className={verificationQueueStatus==="approved"?"selected":""} onClick={()=>chooseReviewQueue("approved")}>Approved</button><button className={verificationQueueStatus==="rejected"?"selected":""} onClick={()=>chooseReviewQueue("rejected")}>Rejected</button><button className={verificationQueueStatus==="revoked"?"selected":""} onClick={()=>chooseReviewQueue("revoked")}>Revoked</button></div><p>Only approve when you independently confirm the listed artist controls the official page and the unique code appears there. Do not approve links alone.</p>
+ {verificationQueue.length?verificationQueue.map(item=><article className="verify-review" key={item.id}><div className="verify-review-top"><span className="section-index">ARTIST IDENTITY REQUEST</span><span className={"pill status-"+item.status}>{item.status.toUpperCase()}</span></div><h3>{item.artistName}</h3><p>Requested by {item.artist?.displayName} ({item.artist?.email})</p><p>Platform: {item.platform}</p><p><a href={item.officialUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={14}/> Open claimed official page</a></p><div className="verify-proof"><code>{item.proofCode}</code></div>{item.notes&&<p>Artist notes: {item.notes}</p>}
+ {item.status==="pending"&&<label className="verify-checkbox"><input type="checkbox" checked={!!reviewConfirmed[item.id]} onChange={e=>setReviewConfirmed(v=>({...v,[item.id]:e.target.checked}))}/> I checked the official account independently and confirmed this proof code is publicly displayed.</label>}
+ <label className="field"><span>Review notes. Required for rejection or revocation.</span><textarea maxLength={500} value={reviewNotes[item.id]||""} onChange={e=>setReviewNotes(v=>({...v,[item.id]:e.target.value}))} placeholder="Document ownership confirmation or why the request is rejected."/></label>
+ <div className="verify-review-actions">{item.status==="pending"&&<><button className="btn-primary" disabled={!reviewConfirmed[item.id]} onClick={()=>reviewVerification(item,"approve")}>Approve verified artist <BadgeCheck size={16}/></button><button className="btn-outline" disabled={!(reviewNotes[item.id]||"").trim()} onClick={()=>reviewVerification(item,"reject")}>Reject request</button></>}{item.status==="approved"&&<button className="btn-outline" disabled={(reviewNotes[item.id]||"").trim().length<3} onClick={()=>revokeVerification(item)}>Revoke verification</button>}</div></article>):empty(<ShieldCheck size={26}/>,"No "+verificationQueueStatus+" requests.","Requests in this category will appear here.")}
  </section>}
       {page==="Portfolio"&&<div className="portfolio-layout">
  <div className="portfolio-intro"><span className="section-index">YOUR SOUND</span><h2>Tracks, demos and credits.</h2><p>Share your work. People listen here or follow the original link.</p></div>
