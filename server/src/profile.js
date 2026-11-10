@@ -52,8 +52,9 @@ export function profileCompleteness(u){
  const fields=[!!u.displayName?.trim(),!!u.profession?.trim(),!!u.bio?.trim(),!!u.avatarUrl,!!u.genres?.length,!!u.skills?.length,!!u.creativeTags?.length,!!u.portfolio?.length,!!u.preferredRoles?.length,!!u.preferredGenres?.length];
  return fields.filter(Boolean).length*10;
 }
+import {publicVerification} from "./verification.js";
 export function publicProfile(u){
- return {id:String(u._id),displayName:u.displayName,profession:u.profession,avatarUrl:u.avatarUrl||"",genres:u.genres||[],skills:u.skills||[],creativeTags:u.creativeTags||[],available:u.available===true,bio:u.bio||"",portfolio:u.portfolio||[],preferredRoles:u.preferredRoles||[],preferredGenres:u.preferredGenres||[],preferredTags:u.preferredTags||[],completeness:profileCompleteness(u)};
+ return {id:String(u._id),...publicVerification(u),...(u.role?{role:u.role}:{}),displayName:u.displayName,profession:u.profession,avatarUrl:u.avatarUrl||"",genres:u.genres||[],skills:u.skills||[],creativeTags:u.creativeTags||[],available:u.available===true,bio:u.bio||"",portfolio:u.portfolio||[],preferredRoles:u.preferredRoles||[],preferredGenres:u.preferredGenres||[],preferredTags:u.preferredTags||[],completeness:profileCompleteness(u)};
 }
 export function creatorSearch(query){
  if(!isRecord(query))return {error:"Invalid search."};

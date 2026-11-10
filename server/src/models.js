@@ -25,6 +25,9 @@ const User = model("User", new Schema({
     featured: { type: Boolean, default: false },
     genres: tags(), tags: tags()
   }],
+  verifiedAt: { type: Date, default: null },
+  verifiedArtistName: { type: String, default: "", maxlength: 80 },
+  verifiedPlatform: { type: String, default: "" },
   followerCount: { type: Number, default: 0, min: 0 }
 }, opts));
 
@@ -54,4 +57,16 @@ const Invitation = model("Invitation", new Schema({
 }, opts));
 Invitation.schema.index({ project: 1, receiver: 1 }, { unique: true });
 
-export { User, Project, Application, Invitation };
+const VerificationRequest = model("VerificationRequest", new Schema({
+ artist: {type:Schema.Types.ObjectId,ref:"User",required:true,unique:true,index:true},
+ artistName: {type:String,required:true,maxlength:80},
+ platform: {type:String,required:true,enum:["website","youtube","spotify","soundcloud","instagram","other"]},
+ officialUrl: {type:String,required:true,maxlength:500},
+ proofCode: {type:String,required:true},
+ notes: {type:String,default:"",maxlength:600},
+ status: {type:String,enum:["pending","approved","rejected","revoked"],default:"pending",index:true},
+ reviewedBy: {type:Schema.Types.ObjectId,ref:"User",default:null},
+ reviewedAt: {type:Date,default:null},
+ reviewReason: {type:String,default:"",maxlength:500}
+},opts));
+export { User, Project, Application, Invitation, VerificationRequest };

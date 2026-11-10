@@ -7,11 +7,12 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 import mongoose from "mongoose";
-import { User, Project, Application, Invitation } from "./models.js";
+import { User, Project, Application, Invitation, VerificationRequest } from "./models.js";
 import { rank, evaluateRanking } from "./matcher.js";
 import { publicProfile, validateProfile, validatePortfolio, creatorSearch } from "./profile.js";
 import { validateProject, validateApplication, validateProjectQuery } from "./projects.js";
 import { canRespond, canInvite, canRemoveShortlist } from "./invitation-policy.js";
+import { validateRequest, canReview, newProofCode } from "./verification.js";
 
 const app = express();
 app.use(helmet());
@@ -91,9 +92,75 @@ app.get("/api/me",auth,asyncRoute(async(req,res)=>{
 app.put("/api/me",auth,asyncRoute(async(req,res)=>{
  const parsed=validateProfile(req.body);
  if(parsed.error)return sendError(res,400,parsed.error);
+ const previous=await User.findById(req.auth.id);
+ if(!previous)return sendError(res,401,"Account unavailable.");
+ if(previous.verifiedAt&&parsed.update.displayName!==undefined&&parsed.update.displayName!==previous.verifiedArtistName)
+  return sendError(res,409,"Verified artist names cannot be changed. Contact an administrator to review your verification.");
  const user=await User.findByIdAndUpdate(req.auth.id,{$set:parsed.update},{new:true,runValidators:true});
  if(!user)return sendError(res,401,"Account unavailable.");
  res.setHeader("Cache-Control","no-store");res.json(publicProfile(user));
+}));
+app.use("/api/verification", rateLimit({windowMs:15*60*1000,limit:25,standardHeaders:"draft-7",legacyHeaders:false}));
+app.get("/api/verification/mine",auth,asyncRoute(async(req,res)=>{
+ const item=await VerificationRequest.findOne({artist:req.auth.id}).lean();
+ res.setHeader("Cache-Control","private, no-store");
+ res.json(item?{id:String(item._id),artistName:item.artistName,platform:item.platform,officialUrl:item.officialUrl,
+  proofCode:item.proofCode,status:item.status,notes:item.notes,reviewReason:item.reviewReason||"",createdAt:item.createdAt,reviewedAt:item.reviewedAt}:null);
+}));
+app.post("/api/verification/request",auth,asyncRoute(async(req,res)=>{
+ const parsed=validateRequest(req.body);
+ if(parsed.error)return sendError(res,400,parsed.error);
+ const user=await User.findById(req.auth.id);
+ if(!user)return sendError(res,401,"Account unavailable.");
+ if(user.verifiedAt)return sendError(res,409,"Your account is already verified.");
+ const existing=await VerificationRequest.findOne({artist:user._id});
+ if(existing&&["pending","approved"].includes(existing.status))return sendError(res,409,"A verification request already exists.");
+ const fields={...parsed.data,proofCode:newProofCode(),status:"pending",reviewedBy:null,reviewedAt:null,reviewReason:""};
+ let item;
+ if(existing){item=await VerificationRequest.findOneAndUpdate({_id:existing._id,status:{$in:["rejected","revoked"]}},{$set:fields},{new:true,runValidators:true});if(!item)return sendError(res,409,"Verification request already submitted.");}
+ else{try{item=await VerificationRequest.create({artist:user._id,...fields});}catch(err){if(err.code===11000)return sendError(res,409,"A verification request already exists.");throw err;}}
+ res.setHeader("Cache-Control","private, no-store");
+ res.status(201).json({id:String(item._id),status:item.status,proofCode:item.proofCode,officialUrl:item.officialUrl});
+}));
+const requireCurrentAdmin=asyncRoute(async(req,res,next)=>{
+ const user=await User.findById(req.auth.id).select("role");
+ if(!user||user.role!=="admin")return sendError(res,403,"Administrator access required.");
+ next();
+});
+app.get("/api/verification/admin/queue",auth,requireCurrentAdmin,asyncRoute(async(req,res)=>{
+ const requested=req.query.status||"pending";
+ if(!["pending","approved","rejected","revoked"].includes(requested))return sendError(res,400,"Invalid status.");
+ const items=await VerificationRequest.find({status:requested}).sort({createdAt:1}).limit(100)
+  .populate("artist","displayName email verifiedAt");
+ res.setHeader("Cache-Control","private, no-store");
+ res.json(items.map(i=>({id:String(i._id),artistName:i.artistName,platform:i.platform,officialUrl:i.officialUrl,
+  proofCode:i.proofCode,notes:i.notes,status:i.status,reviewReason:i.reviewReason,
+  artist:{id:String(i.artist?._id||""),displayName:i.artist?.displayName||"",email:i.artist?.email||""},createdAt:i.createdAt})));
+}));
+app.patch("/api/verification/admin/:id",auth,requireCurrentAdmin,asyncRoute(async(req,res)=>{
+ if(!idOk(req.params.id))return sendError(res,400,"Invalid request ID.");
+ const review=canReview("admin",req.body);if(review.error)return sendError(res,review.status,review.error);
+ const item=await VerificationRequest.findOneAndUpdate({_id:req.params.id,status:"pending"},
+  {$set:{status:review.decision==="approve"?"approved":"rejected",reviewReason:review.reason,
+   reviewedBy:req.auth.id,reviewedAt:new Date()}},{new:true});
+ if(!item)return sendError(res,409,"Pending verification request not found.");
+ if(review.decision==="approve"){
+  await User.updateOne({_id:item.artist},{$set:{verifiedAt:new Date(),verifiedArtistName:item.artistName,verifiedPlatform:item.platform}});
+ }else{
+  await User.updateOne({_id:item.artist},{$set:{verifiedAt:null,verifiedArtistName:"",verifiedPlatform:""}});
+ }
+ res.setHeader("Cache-Control","private, no-store");
+ res.json({id:String(item._id),status:item.status});
+}));
+app.post("/api/verification/admin/:id/revoke",auth,requireCurrentAdmin,asyncRoute(async(req,res)=>{
+ if(!idOk(req.params.id))return sendError(res,400,"Invalid request ID.");
+ const reason=req.body?.reason;
+ if(typeof reason!=="string"||reason.trim().length<3||reason.length>500)return sendError(res,400,"Explain the revocation.");
+ const item=await VerificationRequest.findOneAndUpdate({_id:req.params.id,status:"approved"},
+  {$set:{status:"revoked",reviewReason:reason.trim(),reviewedBy:req.auth.id,reviewedAt:new Date()}},{new:true});
+ if(!item)return sendError(res,409,"Approved verification request not found.");
+ await User.updateOne({_id:item.artist},{$set:{verifiedAt:null,verifiedArtistName:"",verifiedPlatform:""}});
+ res.setHeader("Cache-Control","private, no-store");res.json({id:String(item._id),status:"revoked"});
 }));
 app.post("/api/me/portfolio",auth,asyncRoute(async(req,res)=>{
  const parsed=validatePortfolio(req.body);
@@ -135,13 +202,13 @@ app.get("/api/creators",auth,asyncRoute(async(req,res)=>{
  if(parsed.error)return sendError(res,400,parsed.error);
  const users=await User.find({...parsed.filter,_id:{$ne:req.auth.id}})
    .sort({createdAt:-1,_id:-1}).skip((parsed.page-1)*parsed.limit).limit(parsed.limit)
-   .select("displayName profession avatarUrl genres skills creativeTags available bio portfolio preferredRoles preferredGenres preferredTags");
+   .select("displayName profession avatarUrl genres skills creativeTags available bio portfolio preferredRoles preferredGenres preferredTags verifiedAt verifiedArtistName verifiedPlatform");
  res.setHeader("Cache-Control","private, no-store");res.json(users.map(publicProfile));
 }));
 app.get("/api/creators/:id",auth,asyncRoute(async(req,res)=>{
  if(!idOk(req.params.id))return sendError(res,400,"Invalid creator ID.");
  const user=await User.findById(req.params.id)
-  .select("displayName profession avatarUrl genres skills creativeTags available bio portfolio preferredRoles preferredGenres preferredTags");
+  .select("displayName profession avatarUrl genres skills creativeTags available bio portfolio preferredRoles preferredGenres preferredTags verifiedAt verifiedArtistName verifiedPlatform");
  if(!user)return sendError(res,404,"Creator not found.");
  res.setHeader("Cache-Control","private, no-store");res.json(publicProfile(user));
 }));
