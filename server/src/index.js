@@ -9,6 +9,7 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:
 import mongoose from "mongoose";
 import { User, Project, Application, Invitation, VerificationRequest, AudioSample } from "./models.js";
 import {validateAudioFile,validateAudioMetadata,AUDIO_MAX_BYTES,AUDIO_MAX_FILES} from "./audio.js";
+import {validateMusicAnalysis} from "./music-analysis.js";
 import { rank, evaluateRanking } from "./matcher.js";
 import { publicProfile, validateProfile, validatePortfolio, creatorSearch } from "./profile.js";
 import { validateProject, validateApplication, validateProjectQuery } from "./projects.js";
@@ -166,15 +167,15 @@ app.post("/api/verification/admin/:id/revoke",auth,requireCurrentAdmin,asyncRout
 // Day 9: authenticated short audio excerpts. Binary is stored outside the User model.
 const audioUpload=express.raw({type:["audio/mpeg","audio/mp3","audio/wav","audio/x-wav","audio/wave"],limit:AUDIO_MAX_BYTES});
 app.use("/api/me/audio",rateLimit({windowMs:15*60*1000,limit:40,standardHeaders:"draft-7",legacyHeaders:false}));
-const audioMeta=x=>({id:String(x._id),title:x.title,kind:x.kind,mimeType:x.mimeType,byteSize:x.byteSize,createdAt:x.createdAt});
+const audioMeta=x=>({id:String(x._id),title:x.title,kind:x.kind,mimeType:x.mimeType,byteSize:x.byteSize,analysis:x.analysis||null,createdAt:x.createdAt});
 app.get("/api/me/audio",auth,asyncRoute(async(req,res)=>{
- const samples=await AudioSample.find({owner:req.auth.id}).sort({createdAt:-1}).select("-audio").lean();
+ const samples=await AudioSample.find({owner:req.auth.id}).sort({createdAt:-1}).select("-audio +analysis").lean();
  res.setHeader("Cache-Control","private, no-store");res.json(samples.map(audioMeta));
 }));
 app.get("/api/creators/:id/audio",auth,asyncRoute(async(req,res)=>{
  if(!idOk(req.params.id))return sendError(res,400,"Invalid creator.");
  if(!await User.exists({_id:req.params.id}))return sendError(res,404,"Creator not found.");
- const samples=await AudioSample.find({owner:req.params.id}).sort({createdAt:-1}).select("-audio").lean();
+ const samples=await AudioSample.find({owner:req.params.id}).sort({createdAt:-1}).select("-audio +analysis").lean();
  res.setHeader("Cache-Control","private, no-store");res.json(samples.map(audioMeta));
 }));
 app.post("/api/me/audio",auth,audioUpload,asyncRoute(async(req,res)=>{
@@ -186,6 +187,15 @@ app.post("/api/me/audio",auth,audioUpload,asyncRoute(async(req,res)=>{
  if(await AudioSample.countDocuments({owner:req.auth.id})>=AUDIO_MAX_FILES)return sendError(res,409,"Maximum five audio samples per creator. Delete one before uploading another.");
  const sample=await AudioSample.create({owner:req.auth.id,title:info.title,kind:info.kind,mimeType:checked.mimeType,byteSize:req.body.length,audio:req.body});
  res.setHeader("Cache-Control","private, no-store");res.status(201).json(audioMeta(sample));
+}));
+app.put("/api/me/audio/:id/analysis",auth,asyncRoute(async(req,res)=>{
+ if(!idOk(req.params.id))return sendError(res,400,"Invalid audio sample.");
+ const parsed=validateMusicAnalysis(req.body);
+ if(parsed.error)return sendError(res,400,parsed.error);
+ const sample=await AudioSample.findOneAndUpdate({_id:req.params.id,owner:req.auth.id},
+  {$set:{analysis:parsed.analysis}},{new:true,runValidators:true}).select("-audio +analysis");
+ if(!sample)return sendError(res,404,"Audio sample not found.");
+ res.setHeader("Cache-Control","private, no-store");res.json(audioMeta(sample));
 }));
 app.get("/api/audio/:id",auth,asyncRoute(async(req,res)=>{
  if(!idOk(req.params.id))return sendError(res,400,"Invalid audio sample.");
