@@ -69,4 +69,12 @@ const VerificationRequest = model("VerificationRequest", new Schema({
  reviewedAt: {type:Date,default:null},
  reviewReason: {type:String,default:"",maxlength:500}
 },opts));
-export { User, Project, Application, Invitation, VerificationRequest };
+const AudioSample = model("AudioSample",new Schema({
+ owner:{type:Schema.Types.ObjectId,ref:"User",required:true,index:true},
+ title:{type:String,required:true,maxlength:100},
+ kind:{type:String,enum:["music","vocal"],required:true},
+ mimeType:{type:String,enum:["audio/mpeg","audio/wav"],required:true},
+ byteSize:{type:Number,required:true,max:2097152},
+ audio:{type:Buffer,required:true,select:false}
+},opts));
+export { User, Project, Application, Invitation, VerificationRequest, AudioSample };

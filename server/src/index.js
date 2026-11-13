@@ -7,7 +7,8 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 import mongoose from "mongoose";
-import { User, Project, Application, Invitation, VerificationRequest } from "./models.js";
+import { User, Project, Application, Invitation, VerificationRequest, AudioSample } from "./models.js";
+import {validateAudioFile,validateAudioMetadata,AUDIO_MAX_BYTES,AUDIO_MAX_FILES} from "./audio.js";
 import { rank, evaluateRanking } from "./matcher.js";
 import { publicProfile, validateProfile, validatePortfolio, creatorSearch } from "./profile.js";
 import { validateProject, validateApplication, validateProjectQuery } from "./projects.js";
@@ -161,6 +162,48 @@ app.post("/api/verification/admin/:id/revoke",auth,requireCurrentAdmin,asyncRout
  if(!item)return sendError(res,409,"Approved verification request not found.");
  await User.updateOne({_id:item.artist},{$set:{verifiedAt:null,verifiedArtistName:"",verifiedPlatform:""}});
  res.setHeader("Cache-Control","private, no-store");res.json({id:String(item._id),status:"revoked"});
+}));
+// Day 9: authenticated short audio excerpts. Binary is stored outside the User model.
+const audioUpload=express.raw({type:["audio/mpeg","audio/mp3","audio/wav","audio/x-wav","audio/wave"],limit:AUDIO_MAX_BYTES});
+app.use("/api/me/audio",rateLimit({windowMs:15*60*1000,limit:40,standardHeaders:"draft-7",legacyHeaders:false}));
+const audioMeta=x=>({id:String(x._id),title:x.title,kind:x.kind,mimeType:x.mimeType,byteSize:x.byteSize,createdAt:x.createdAt});
+app.get("/api/me/audio",auth,asyncRoute(async(req,res)=>{
+ const samples=await AudioSample.find({owner:req.auth.id}).sort({createdAt:-1}).select("-audio").lean();
+ res.setHeader("Cache-Control","private, no-store");res.json(samples.map(audioMeta));
+}));
+app.get("/api/creators/:id/audio",auth,asyncRoute(async(req,res)=>{
+ if(!idOk(req.params.id))return sendError(res,400,"Invalid creator.");
+ if(!await User.exists({_id:req.params.id}))return sendError(res,404,"Creator not found.");
+ const samples=await AudioSample.find({owner:req.params.id}).sort({createdAt:-1}).select("-audio").lean();
+ res.setHeader("Cache-Control","private, no-store");res.json(samples.map(audioMeta));
+}));
+app.post("/api/me/audio",auth,audioUpload,asyncRoute(async(req,res)=>{
+ const info=validateAudioMetadata(req.query.title,req.query.kind);
+ if(info.error)return sendError(res,400,info.error);
+ const checked=validateAudioFile(req.body,req.headers["content-type"]?.split(";")[0].trim());
+ if(checked.error)return sendError(res,400,checked.error);
+ if(!await User.exists({_id:req.auth.id}))return sendError(res,401,"Account unavailable.");
+ if(await AudioSample.countDocuments({owner:req.auth.id})>=AUDIO_MAX_FILES)return sendError(res,409,"Maximum five audio samples per creator. Delete one before uploading another.");
+ const sample=await AudioSample.create({owner:req.auth.id,title:info.title,kind:info.kind,mimeType:checked.mimeType,byteSize:req.body.length,audio:req.body});
+ res.setHeader("Cache-Control","private, no-store");res.status(201).json(audioMeta(sample));
+}));
+app.get("/api/audio/:id",auth,asyncRoute(async(req,res)=>{
+ if(!idOk(req.params.id))return sendError(res,400,"Invalid audio sample.");
+ const sample=await AudioSample.findById(req.params.id);
+ if(!sample)return sendError(res,404,"Audio sample not found.");
+ if(!await User.exists({_id:sample.owner}))return sendError(res,404,"Creator unavailable.");
+ res.setHeader("Cache-Control","private, no-store");
+ res.setHeader("X-Content-Type-Options","nosniff");
+ res.setHeader("Content-Type",sample.mimeType);
+ res.setHeader("Content-Disposition","inline");
+ res.setHeader("Content-Length",String(sample.audio.length));
+ res.end(sample.audio);
+}));
+app.delete("/api/me/audio/:id",auth,asyncRoute(async(req,res)=>{
+ if(!idOk(req.params.id))return sendError(res,400,"Invalid audio sample.");
+ const removed=await AudioSample.findOneAndDelete({_id:req.params.id,owner:req.auth.id});
+ if(!removed)return sendError(res,404,"Audio sample not found.");
+ res.setHeader("Cache-Control","private, no-store");res.json({deleted:true});
 }));
 app.post("/api/me/portfolio",auth,asyncRoute(async(req,res)=>{
  const parsed=validatePortfolio(req.body);
