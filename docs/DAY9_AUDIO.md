@@ -1,6 +1,6 @@
 # Day 9: Audio uploads and previews
 
-Creators upload up to five short music or clean vocal audio examples, MP3 or WAV, with a 2 MB limit per file. Stored clips are separate AudioSample MongoDB documents with owner, title, kind, MIME type, byte count and binary audio. No third-party storage or payment services. Browser performs a basic playback duration check where metadata is available, while server enforces byte size and file header only. Uploads must be audio owned or licensed by the creator.
+Creators upload up to five short music or clean vocal audio examples, MP3 or WAV, with a 2 MB limit per file. Stored clips are separate AudioSample MongoDB documents with owner, title, kind, MIME type, byte count and binary audio. No third-party storage or payment services. The server enforces file byte size and header validation. Duration is not yet validated, so artists should upload short excerpts. Uploads must be audio owned or licensed by the creator.
 
 Authenticated endpoints:
 - POST /api/me/audio?title=...&kind=music|vocal, raw MP3 or WAV body, bearer token

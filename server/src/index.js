@@ -189,7 +189,7 @@ app.post("/api/me/audio",auth,audioUpload,asyncRoute(async(req,res)=>{
 }));
 app.get("/api/audio/:id",auth,asyncRoute(async(req,res)=>{
  if(!idOk(req.params.id))return sendError(res,400,"Invalid audio sample.");
- const sample=await AudioSample.findById(req.params.id);
+ const sample=await AudioSample.findById(req.params.id).select("+audio");
  if(!sample)return sendError(res,404,"Audio sample not found.");
  if(!await User.exists({_id:sample.owner}))return sendError(res,404,"Creator unavailable.");
  res.setHeader("Cache-Control","private, no-store");
