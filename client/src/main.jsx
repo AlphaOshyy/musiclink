@@ -3,6 +3,7 @@ import { ArrowUpRight, ArrowLeft, ArrowRight, AudioLines, BriefcaseBusiness, Cir
 import{createRoot}from"react-dom/client";
 import "./style.css";
 import { getMedia } from "./media.js";
+import { analyzeAudioFile } from "./musicAnalysis.js";
 
 const API=import.meta.env.VITE_API_URL||"http://localhost:4000/api";
 function App(){
@@ -34,6 +35,7 @@ function App(){
  const[audioTitle,setAudioTitle]=useState("");
  const[audioKind,setAudioKind]=useState("music");
  const[audioBusy,setAudioBusy]=useState(false);
+ const[analysisBusy,setAnalysisBusy]=useState(null);
  const[audioPreview,setAudioPreview]=useState(null);
  useEffect(()=>()=>{if(audioPreview?.url)URL.revokeObjectURL(audioPreview.url)},[audioPreview]);
  const[editTrack,setEditTrack]=useState(null);
@@ -107,18 +109,39 @@ function App(){
   setNotice("Verification "+(decision==="approve"?"approved.":"rejected."));
  })};
  const revokeVerification=async(item)=>{await safe(async()=>{const reason=(reviewNotes[item.id]||"").trim();await request("/verification/admin/"+item.id+"/revoke",{method:"POST",body:JSON.stringify({reason})});setVerificationQueue(await request("/verification/admin/queue?status=approved"));await refresh();setNotice("Artist badge revoked.")})};
- const submitAudio=async(e)=>{e.preventDefault();if(audioBusy)return;setAudioBusy(true);await safe(async()=>{
- if(!audioFile)throw new Error("Select an MP3 or WAV file.");
- if(audioFile.size>2*1024*1024||audioFile.size<44)throw new Error("Audio must be under 2 MB.");
- if(!["audio/mpeg","audio/mp3","audio/wav","audio/x-wav","audio/wave"].includes(audioFile.type))throw new Error("Select MP3 or WAV audio.");
- const path="/me/audio?title="+encodeURIComponent(audioTitle.trim())+"&kind="+encodeURIComponent(audioKind);
- const response=await fetch(API+path,{method:"POST",headers:{Authorization:"Bearer "+token,"Content-Type":audioFile.type},body:audioFile});
- const data=await response.json().catch(()=>({}));
- if(!response.ok)throw new Error(data.error||"Upload failed.");
- setMyAudio(await request("/me/audio"));setAudioFile(null);setAudioTitle("");
- const fileInput=document.getElementById("ml-audio-file");if(fileInput)fileInput.value="";
- setNotice("Audio sample uploaded. Open its preview below.");
- });setAudioBusy(false)};
+ const submitAudio=async(e)=>{e.preventDefault();if(audioBusy)return;setAudioBusy(true);
+ try{await safe(async()=>{
+  if(!audioFile)throw new Error("Select an MP3 or WAV file.");
+  if(audioFile.size>2*1024*1024||audioFile.size<44)throw new Error("Audio must be under 2 MB.");
+  if(!["audio/mpeg","audio/mp3","audio/wav","audio/x-wav","audio/wave"].includes(audioFile.type))throw new Error("Select MP3 or WAV audio.");
+  const file=audioFile;
+  // Decode before uploading, so corrupt files are rejected before storage.
+  const analysis=await analyzeAudioFile(file);
+  const path="/me/audio?title="+encodeURIComponent(audioTitle.trim())+"&kind="+encodeURIComponent(audioKind);
+  const response=await fetch(API+path,{method:"POST",headers:{Authorization:"Bearer "+token,"Content-Type":file.type},body:file});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(data.error||"Upload failed.");
+  try{
+   await request("/me/audio/"+data.id+"/analysis",{method:"PUT",body:JSON.stringify(analysis)});
+   setNotice("Audio uploaded and analyzed. Review the estimates below.");
+  }catch(error){
+   setNotice("Audio uploaded, but analysis could not be saved. Select Analyze to retry.");
+  }
+  setMyAudio(await request("/me/audio"));setAudioFile(null);setAudioTitle("");
+  const fileInput=document.getElementById("ml-audio-file");if(fileInput)fileInput.value="";
+ })}finally{setAudioBusy(false)}
+};
+const analyzeExisting=async(id)=>{if(analysisBusy)return;setAnalysisBusy(id);
+ try{await safe(async()=>{
+  const response=await fetch(API+"/audio/"+id,{headers:{Authorization:"Bearer "+token}});
+  if(!response.ok)throw new Error("Audio unavailable for analysis.");
+  const blob=await response.blob();
+  const analysis=await analyzeAudioFile(blob);
+  await request("/me/audio/"+id+"/analysis",{method:"PUT",body:JSON.stringify(analysis)});
+  setMyAudio(await request("/me/audio"));
+  setNotice("Analysis refreshed. Results are exploratory estimates.");
+ })}finally{setAnalysisBusy(null)}
+};
  const deleteAudio=async(id)=>{await safe(async()=>{
  await request("/me/audio/"+id,{method:"DELETE"});
  setMyAudio(await request("/me/audio"));
@@ -161,6 +184,8 @@ function App(){
  const avatarColor=(name)=>["linear-gradient(135deg,#7141f2,#0aa3e0)","linear-gradient(135deg,#b044f0,#5359e0)","linear-gradient(135deg,#226ad8,#1dc6e8)","linear-gradient(135deg,#6835be,#cc4dc7)"][Array.from(name||"A").reduce((s,c)=>s+c.charCodeAt(0),0)%4];
  const badge=(items)=><div className="chips">{(items||[]).slice(0,5).map((x,i)=><span key={x+i}>{x}</span>)}</div>;
  const verifiedBadge=(u)=>u?.verified?<span className="artist-verified" title="Artist ownership reviewed by MusicLink"><BadgeCheck size={15} strokeWidth={2.3}/> MusicLink Verified</span>:null;
+ const analysisDetails=(analysis)=>analysis?<div className="audio-analysis"><div className="audio-analysis-title"><span>ESTIMATED AUDIO PROFILE</span><span>EXPERIMENTAL · {Math.round(analysis.confidence*100)}% SIGNAL CONFIDENCE</span></div><div className="audio-analysis-grid"><div><span>BPM</span><strong>{analysis.bpm??"Unknown"}</strong></div><div><span>KEY</span><strong>{analysis.key?analysis.key+" "+analysis.mode:"Unknown"}</strong></div><div><span>ENERGY</span><strong>{Math.round(analysis.energy*100)}%</strong></div><div><span>MOOD HINT</span><strong>{analysis.mood}</strong></div></div><div className="audio-analysis-foot"><span>Style hint: {analysis.styleHint}</span><span>Rhythmic clarity: {Math.round(analysis.rhythmStrength*100)}%</span></div><p>Computed in the browser from this clip. Tempo and key are estimates. Mood and style are rule-based suggestions, not a trained classifier or a guarantee.</p></div>:<div className="audio-analysis-unavailable">No audio analysis yet. Select Analyze to estimate BPM, key, energy and style.</div>;
+
  const showOwner=(p)=>String(p.owner?._id||p.owner)===me?.id;
  const empty=(icon,title,description,buttonLabel,onClick)=><div className="empty-state"><div className="empty-icon">{icon}</div><h3>{title}</h3><p>{description}</p>{buttonLabel&&<button className="btn-outline" onClick={onClick}>{buttonLabel}<ArrowUpRight size={16}/></button>}</div>;
  const detail=(label,value,placeholder)=>input(label.toLowerCase().replaceAll(" ",""),label,value||placeholder||"");
@@ -227,7 +252,7 @@ function App(){
  </form></div>}
  {page==="Creators"&&<>
         <div className="directory-toolbar"><div className="directory-search"><Search size={19}/><input value={creatorQuery} onChange={e=>setCreatorQuery(e.target.value)} placeholder="Search by name, genre or skill..." aria-label="Search creators"/></div><span>{creators.filter(c=>[c.displayName,c.profession,c.bio,...(c.genres||[]),...(c.skills||[])].join(" ").toLowerCase().includes(creatorQuery.toLowerCase())).length} CREATORS</span></div>
-        {selectedCreator?<div className="creator-detail"><button className="back-link" onClick={()=>{setSelectedCreator(null);setAudioPreview(null);setCreatorAudio([])}}><ArrowLeft size={17}/> All creators</button><div className="creator-detail-cover"><img src="https://images.unsplash.com/photo-1634286051376-940ff8525141?auto=format&fit=crop&w=1000&q=75" alt="Recording studio atmosphere"/></div><div className="creator-detail-body"><div className="creator-detail-avatar" style={{background:avatarColor(selectedCreator.displayName)}}>{selectedCreator.avatarUrl?<img loading="lazy" src={selectedCreator.avatarUrl} alt={selectedCreator.displayName+" profile photo"}/>:selectedCreator.displayName?.charAt(0).toUpperCase()}</div><span className={"availability "+(selectedCreator.available?"available":"unavailable")}>{selectedCreator.available?"OPEN TO COLLABORATE":"CURRENTLY UNAVAILABLE"}</span><h2>{selectedCreator.displayName} {verifiedBadge(selectedCreator)}</h2><p className="creator-role">{selectedCreator.profession||"Independent artist"}</p><p>{selectedCreator.bio||"This creator hasn't shared their story yet."}</p><div className="creator-spec"><div><span>GENRES</span>{badge(selectedCreator.genres)}</div><div><span>SKILLS</span>{badge(selectedCreator.skills)}</div><div><span>CREATIVE DIRECTION</span>{badge(selectedCreator.creativeTags)}</div></div><div className="creator-audio-showcase"><h3>Audio samples</h3><p>Original music and vocal excerpts uploaded by this creator.</p>{creatorAudio.length?<div className="audio-sample-list">{creatorAudio.map(sample=><div className="audio-sample" key={sample.id}><div className="audio-sample-main"><div className="audio-sample-icon"><AudioLines size={20}/></div><div><strong>{sample.title}</strong><span>{sample.kind==="vocal"?"VOCAL":"MUSIC"} · {(sample.byteSize/1024).toFixed(0)} KB</span></div><button className="btn-outline" type="button" onClick={()=>previewAudio(sample.id)}>{audioPreview?.id===sample.id?"Close":"Listen"} <Headphones size={14}/></button></div>{audioPreview?.id===sample.id&&<audio className="audio-native-player" controls preload="metadata" src={audioPreview.url}>Your browser does not support audio playback.</audio>}</div>)}</div>:<p>No uploaded audio samples yet.</p>}</div>
+        {selectedCreator?<div className="creator-detail"><button className="back-link" onClick={()=>{setSelectedCreator(null);setAudioPreview(null);setCreatorAudio([])}}><ArrowLeft size={17}/> All creators</button><div className="creator-detail-cover"><img src="https://images.unsplash.com/photo-1634286051376-940ff8525141?auto=format&fit=crop&w=1000&q=75" alt="Recording studio atmosphere"/></div><div className="creator-detail-body"><div className="creator-detail-avatar" style={{background:avatarColor(selectedCreator.displayName)}}>{selectedCreator.avatarUrl?<img loading="lazy" src={selectedCreator.avatarUrl} alt={selectedCreator.displayName+" profile photo"}/>:selectedCreator.displayName?.charAt(0).toUpperCase()}</div><span className={"availability "+(selectedCreator.available?"available":"unavailable")}>{selectedCreator.available?"OPEN TO COLLABORATE":"CURRENTLY UNAVAILABLE"}</span><h2>{selectedCreator.displayName} {verifiedBadge(selectedCreator)}</h2><p className="creator-role">{selectedCreator.profession||"Independent artist"}</p><p>{selectedCreator.bio||"This creator hasn't shared their story yet."}</p><div className="creator-spec"><div><span>GENRES</span>{badge(selectedCreator.genres)}</div><div><span>SKILLS</span>{badge(selectedCreator.skills)}</div><div><span>CREATIVE DIRECTION</span>{badge(selectedCreator.creativeTags)}</div></div><div className="creator-audio-showcase"><h3>Audio samples</h3><p>Original music and vocal excerpts uploaded by this creator.</p>{creatorAudio.length?<div className="audio-sample-list">{creatorAudio.map(sample=><div className="audio-sample" key={sample.id}><div className="audio-sample-main"><div className="audio-sample-icon"><AudioLines size={20}/></div><div><strong>{sample.title}</strong><span>{sample.kind==="vocal"?"VOCAL":"MUSIC"} · {(sample.byteSize/1024).toFixed(0)} KB</span></div><button className="btn-outline" type="button" onClick={()=>previewAudio(sample.id)}>{audioPreview?.id===sample.id?"Close":"Listen"} <Headphones size={14}/></button></div>{audioPreview?.id===sample.id&&<audio className="audio-native-player" controls preload="metadata" src={audioPreview.url}>Your browser does not support audio playback.</audio>}{analysisDetails(sample.analysis)}</div>)}</div>:<p>No uploaded audio samples yet.</p>}</div>
  <div className="creator-work"><h3>Selected work</h3>{(selectedCreator.portfolio||[]).length?(selectedCreator.portfolio||[]).map(a=>{const media=getMedia(a.url);const key=a._id||a.url;return <div className="creator-track" key={key}><div className="creator-track-main"><Music2 size={16}/><span>{a.title}{a.role&&<small>{a.role}</small>}</span>{a.featured&&<span className="featured-label">FEATURED</span>}</div><div className="creator-track-actions">{media.embed&&<button type="button" onClick={()=>setPlaying(playing===key?null:key)}>{playing===key?"Close":"Preview"}</button>}<a href={a.url} target="_blank" rel="noopener noreferrer" aria-label={"Open "+a.title}><ExternalLink size={15}/></a></div>{playing===key&&media.embed&&<div className="player-frame"><iframe title={"Preview "+a.title} src={media.embed} loading="lazy" allow="encrypted-media; fullscreen; picture-in-picture" referrerPolicy="strict-origin-when-cross-origin" sandbox="allow-scripts allow-same-origin allow-popups allow-forms"/></div>}</div>}):<p>No portfolio samples shared yet.</p>}</div></div></div>:
         <>{creators.filter(c=>[c.displayName,c.profession,c.bio,...(c.genres||[]),...(c.skills||[])].join(" ").toLowerCase().includes(creatorQuery.toLowerCase())).length>0?<div className="cards creators-grid">{creators.filter(c=>[c.displayName,c.profession,c.bio,...(c.genres||[]),...(c.skills||[])].join(" ").toLowerCase().includes(creatorQuery.toLowerCase())).map((c,i)=><article className="creator-card" key={c.id}><div className="creator-card-top"><span>CREATOR / {String(i+1).padStart(2,"0")}</span><span className={"availability "+(c.available?"available":"unavailable")}>{c.available?"AVAILABLE":"UNAVAILABLE"}</span></div><div className="creator-identity"><div className="creator-avatar" style={{background:avatarColor(c.displayName)}}>{c.avatarUrl?<img loading="lazy" src={c.avatarUrl} alt={c.displayName+" profile photo"}/>:c.displayName?.charAt(0).toUpperCase()}</div><div><h3>{c.displayName} {verifiedBadge(c)}</h3><span>{c.profession||"Independent creator"}</span></div></div><p>{c.bio||"An independent creator finding their next collaboration."}</p>{badge([...(c.genres||[]).slice(0,2),...(c.skills||[]).slice(0,2)])}<button className="creator-explore" onClick={()=>openCreator(c)}>View creator profile <ArrowUpRight size={18}/></button></article>)}</div>:empty(<UsersRound size={28}/>,"No creators found","Try another search.",creatorQuery?"Clear search":null,()=>setCreatorQuery(""))}</>}
       </>}
@@ -265,7 +290,7 @@ function App(){
  <div className="verify-review-actions">{item.status==="pending"&&<><button className="btn-primary" disabled={!reviewConfirmed[item.id]} onClick={()=>reviewVerification(item,"approve")}>Approve verified artist <BadgeCheck size={16}/></button><button className="btn-outline" disabled={!(reviewNotes[item.id]||"").trim()} onClick={()=>reviewVerification(item,"reject")}>Reject request</button></>}{item.status==="approved"&&<button className="btn-outline" disabled={(reviewNotes[item.id]||"").trim().length<3} onClick={()=>revokeVerification(item)}>Revoke verification</button>}</div></article>):empty(<ShieldCheck size={26}/>,"No "+verificationQueueStatus+" requests.","Requests in this category will appear here.")}
  </section>}
       {page==="Portfolio"&&<div className="portfolio-layout">
- <section className="audio-upload-section"><div className="form-head"><span className="section-index">DAY 09 / AUDIO STUDIO</span><h2>Let them hear your sound.</h2><p>Upload short music or clean vocal excerpts as MP3 or WAV. Maximum five samples, 2 MB each. Only upload audio you own or have permission to share.</p></div>
+ <section className="audio-upload-section"><div className="form-head"><span className="section-index">DAY 10 / MUSIC INTELLIGENCE</span><h2>Your sound, decoded.</h2><p>Upload a music excerpt and MusicLink will estimate its BPM, musical key, energy and stylistic characteristics. Analysis runs locally in your browser. Five samples maximum, 2 MB each.</p></div>
  <form className="audio-upload-form" onSubmit={submitAudio}>
  <label className="field"><span>Sample title</span><input required minLength={2} maxLength={100} value={audioTitle} onChange={e=>setAudioTitle(e.target.value)} placeholder="e.g. Midnight Hook Demo"/></label>
  <label className="field"><span>Type</span><select value={audioKind} onChange={e=>setAudioKind(e.target.value)}><option value="music">Music / instrumental</option><option value="vocal">Vocal sample</option></select></label>
@@ -273,7 +298,7 @@ function App(){
  <button className="btn-primary" type="submit" disabled={audioBusy||myAudio.length>=5||!audioFile}>{audioBusy?"Uploading...":"Upload sample"} <ArrowUpRight size={17}/></button>
  </form>
  <div className="section-heading"><div><span className="section-index">YOUR AUDIO LIBRARY</span><h2>Uploaded sounds <span className="count-number">{myAudio.length} / 5</span></h2></div></div>
- {myAudio.length?<div className="audio-sample-list">{myAudio.map(sample=><div className="audio-sample" key={sample.id}><div className="audio-sample-main"><div className="audio-sample-icon"><AudioLines size={21}/></div><div><strong>{sample.title}</strong><span>{sample.kind==="vocal"?"VOCAL":"MUSIC"} · {(sample.byteSize/1024).toFixed(0)} KB</span></div><div className="audio-sample-actions"><button type="button" className="btn-outline" onClick={()=>previewAudio(sample.id)}>{audioPreview?.id===sample.id?"Close":"Listen"} <Headphones size={15}/></button><button type="button" className="btn-outline" onClick={()=>deleteAudio(sample.id)}><Trash2 size={15}/> Delete</button></div></div>{audioPreview?.id===sample.id&&<audio className="audio-native-player" controls preload="metadata" src={audioPreview.url}>Audio player unavailable.</audio>}</div>)}</div>:<p className="audio-empty">No audio uploaded yet. Add a short excerpt for other musicians to hear.</p>}
+ {myAudio.length?<div className="audio-sample-list">{myAudio.map(sample=><div className="audio-sample" key={sample.id}><div className="audio-sample-main"><div className="audio-sample-icon"><AudioLines size={21}/></div><div><strong>{sample.title}</strong><span>{sample.kind==="vocal"?"VOCAL":"MUSIC"} · {(sample.byteSize/1024).toFixed(0)} KB</span></div><div className="audio-sample-actions"><button type="button" className="btn-outline" onClick={()=>previewAudio(sample.id)}>{audioPreview?.id===sample.id?"Close":"Listen"} <Headphones size={15}/></button><button type="button" className="btn-outline" disabled={!!analysisBusy} onClick={()=>analyzeExisting(sample.id)}><AudioLines size={15}/>{analysisBusy===sample.id?"Analyzing...":"Analyze"}</button><button type="button" className="btn-outline" onClick={()=>deleteAudio(sample.id)}><Trash2 size={15}/> Delete</button></div></div>{audioPreview?.id===sample.id&&<audio className="audio-native-player" controls preload="metadata" src={audioPreview.url}>Audio player unavailable.</audio>}{analysisDetails(sample.analysis)}</div>)}</div>:<p className="audio-empty">No audio uploaded yet. Add a short excerpt for other musicians to hear.</p>}
  </section>
  <div className="portfolio-intro"><span className="section-index">YOUR SOUND</span><h2>Tracks, demos and credits.</h2><p>Share your work. People listen here or follow the original link.</p></div>
  <div className="form-panel portfolio-form"><div className="form-head"><span className="section-index">{editTrack?"EDIT YOUR SAMPLE":"ADD TO YOUR SHOWCASE"}</span><h2>{editTrack?"Edit a track":"Add a track"}</h2><p>You own the links you share. Spotify, YouTube and SoundCloud offer embedded previews.</p></div>

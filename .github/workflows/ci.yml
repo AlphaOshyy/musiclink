@@ -33,7 +33,7 @@ jobs:
         working-directory: client
       - run: npm run build
         working-directory: client
-      - run: node --test src/media.test.js
+      - run: node --test src/media.test.js src/musicAnalysis.test.js
         working-directory: client
 
   recommender:
