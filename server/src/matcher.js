@@ -1,3 +1,4 @@
+import {audioCompatibility,audioAdjustedScore,AUDIO_BLEND} from "./audio-matching.js";
 // MusicLink MCCA v2. Deterministic, transparent research prototype.
 // This is a weighted matching heuristic, not a trained or validated AI model.
 export const WEIGHTS=Object.freeze({genre:.20,skills:.25,creative:.25,portfolio:.20,availability:.10});
@@ -61,10 +62,12 @@ function reasons(factors,reciprocal,role){
  if(role===0)parts.push("Requested role is not an exact match.");
  return parts.join(" ");
 }
-export function rank(project,candidates){
+export function rank(project,candidates,audioContext=null){
  const ranked=(Array.isArray(candidates)?candidates:[]).map(u=>{
   const f=forward(project,u),r=reverse(project,u);
-  const score=round(Math.sqrt(f.value*r.value));
+  const baseScore=round(Math.sqrt(f.value*r.value));
+  const audio=audioContext?audioCompatibility(audioContext.reference,audioContext.byCreator?.[String(u._id||u.id)]):null;
+  const score=audioAdjustedScore(baseScore,audio);
   const genreOnly=overlap(project.genres,u.genres);
   const profileSimilarity=round((genreOnly+overlap(project.requiredSkills,u.skills))/2);
   const evidence={
@@ -74,13 +77,13 @@ export function rank(project,candidates){
    available:u.available===true
   };
   return {
-   id:String(u._id||u.id),score,forward:f.value,reverse:r.value,
+   id:String(u._id||u.id),score,baseScore,audio,forward:f.value,reverse:r.value,
    factors:f.factors,reverseFactors:r.factors,roleMatch:f.roleMatch,
    explanation:reasons(f.factors,r.value,f.roleMatch),
    evidence,baseline:{genreOnly,profileSimilarity}
   };
  }).sort((a,b)=>b.score-a.score||a.id.localeCompare(b.id));
- return {method:"MCCA-RCC v2",weights:WEIGHTS,ranked};
+ return {method:audioContext?.reference?"MCCA-RCC v2 + acoustic pilot":"MCCA-RCC v2",weights:WEIGHTS,audioWeight:audioContext?.reference?AUDIO_BLEND:0,ranked};
 }
 export function evaluateRanking(ranked){
  if(!ranked.length)return {candidateCount:0,meanScore:0,meanGenreBaseline:0,meanProfileBaseline:0,topMatches:0};

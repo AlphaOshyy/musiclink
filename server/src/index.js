@@ -406,7 +406,23 @@ app.get("/api/projects/:id/recommendations",auth,asyncRoute(async(req,res)=>{
  if(!project||String(project.owner)!==req.auth.id)return sendError(res,403,"Only project owners may see recommendations.");
  const candidates=await User.find({_id:{$ne:req.auth.id}}).sort({_id:1}).limit(500)
   .select("displayName profession genres skills creativeTags available portfolio preferredRoles preferredGenres preferredTags");
- const result=rank(project.toObject(),candidates);
+ // Only compare music clips to music clips. Do not infer a voice score or
+ // treat missing recordings as a negative signal. Never retrieve audio bytes.
+ const ownerClip=await AudioSample.findOne({owner:req.auth.id,kind:"music","analysis.confidence":{$gte:.2}})
+  .sort({createdAt:-1}).select("+analysis -audio").lean();
+ const reference=ownerClip?.analysis?.source==="browser-estimate"?ownerClip.analysis:null;
+ let audioContext=null;
+ if(reference){
+  const clips=await AudioSample.find({owner:{$in:candidates.map(u=>u._id)},kind:"music","analysis.confidence":{$gte:.2}})
+   .sort({createdAt:-1}).select("owner createdAt +analysis -audio").lean();
+  const byCreator={};
+  for(const clip of clips){
+   const id=String(clip.owner);
+   if(!byCreator[id]&&clip.analysis?.source==="browser-estimate")byCreator[id]=clip.analysis;
+  }
+  audioContext={reference,byCreator};
+ }
+ const result=rank(project.toObject(),candidates,audioContext);
  const blind=mode==="blind";
  const byId=new Map(candidates.map(u=>[String(u._id),u]));
  const ranked=result.ranked.map((item,i)=>{
@@ -417,13 +433,14 @@ app.get("/api/projects/:id/recommendations",auth,asyncRoute(async(req,res)=>{
   const identity=visible?{id:item.id,displayName:user.displayName,profession:user.profession,
    portfolio:user.portfolio.map(x=>({title:x.title,url:x.url}))}:{anonymousRef:"Candidate "+String(i+1).padStart(2,"0")};
   return {...identity,matchId:visible?item.id:sealCandidate(item.id,String(project._id)),shortlisted,
-   score:item.score,forward:item.forward,reverse:item.reverse,factors:item.factors,
+   score:item.score,baseScore:item.baseScore,forward:item.forward,reverse:item.reverse,factors:item.factors,
+   audio:item.audio?{score:item.audio.score,factors:item.audio.factors,confidence:item.audio.confidence,explanation:item.audio.explanation}:null,
    reverseFactors:item.reverseFactors,roleMatch:item.roleMatch,evidence:item.evidence,
    explanation:item.explanation,baseline:item.baseline,
    ...(visible?{genres:user.genres,skills:user.skills,creativeTags:user.creativeTags,available:user.available}: {})};
  });
  res.setHeader("Cache-Control","no-store");
- res.json({mode,method:result.method,weights:result.weights,summary:evaluateRanking(result.ranked),ranked});
+ res.json({mode,method:result.method,weights:result.weights,audioWeight:result.audioWeight,audioEnabled:!!audioContext,summary:evaluateRanking(result.ranked),ranked});
 }));
 app.post("/api/projects/:id/shortlist",auth,asyncRoute(async(req,res)=>{
   if(!idOk(req.params.id)||typeof req.body.candidateId!=="string")return sendError(res,400,"Invalid IDs.");
