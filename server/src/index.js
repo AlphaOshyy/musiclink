@@ -413,9 +413,9 @@ app.get("/api/projects/:id/recommendations",auth,asyncRoute(async(req,res)=>{
  const needsVocal=roles.some(x=>["vocalist","singer","rapper","recording artist","artist"].includes(x));
  const [ownerMusic,ownerVocal]=await Promise.all([
   AudioSample.findOne({owner:req.auth.id,kind:"music","analysis.confidence":{$gte:.2}})
-   .sort({createdAt:-1}).select("+analysis -audio").lean(),
+   .sort({createdAt:-1}).select("+analysis").lean(),
   needsVocal?AudioSample.findOne({owner:req.auth.id,kind:"vocal","vocalAnalysis.confidence":{$gte:.2}})
-   .sort({createdAt:-1}).select("+vocalAnalysis -audio").lean():Promise.resolve(null)
+   .sort({createdAt:-1}).select("+vocalAnalysis").lean():Promise.resolve(null)
  ]);
  const reference=ownerMusic?.analysis?.source==="browser-estimate"?ownerMusic.analysis:null;
  const vocalReference=ownerVocal?.vocalAnalysis?.source==="browser-estimate"?ownerVocal.vocalAnalysis:null;
@@ -423,9 +423,9 @@ app.get("/api/projects/:id/recommendations",auth,asyncRoute(async(req,res)=>{
  if(audioContext){
   const [musicClips,vocalClips]=await Promise.all([
    reference?AudioSample.find({owner:{$in:candidateIds},kind:"music","analysis.confidence":{$gte:.2}})
-    .sort({createdAt:-1}).select("owner createdAt +analysis -audio").lean():Promise.resolve([]),
+    .sort({createdAt:-1}).select("owner createdAt +analysis").lean():Promise.resolve([]),
    vocalReference?AudioSample.find({owner:{$in:candidateIds},kind:"vocal","vocalAnalysis.confidence":{$gte:.2}})
-    .sort({createdAt:-1}).select("owner createdAt +vocalAnalysis -audio").lean():Promise.resolve([])
+    .sort({createdAt:-1}).select("owner createdAt +vocalAnalysis").lean():Promise.resolve([])
   ]);
   for(const clip of musicClips){
    const id=String(clip.owner);
