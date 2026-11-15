@@ -892,3 +892,18 @@ h1,h2,h3,.brand-lockup .wordmark{font-family:'Syne','Space Grotesk',sans-serif}
 .vocal-measures>p{font-size:11px;line-height:1.65;color:#a99bb8}
 .vocal-measures .audio-analysis-grid strong{font-size:clamp(12px,1.5vw,18px)}
 @media(max-width:650px){.vocal-measures{padding:13px}.vocal-measures .audio-analysis-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Day 12, explanatory acoustic compatibility in the original editorial design */
+.acoustic-method{border-top:1px solid #574b61;border-bottom:1px solid #574b61;background:#18151f;padding:20px 23px;margin:20px 0 27px}
+.acoustic-method strong{display:block;color:#e8d9f9;font:700 18px 'Syne',sans-serif;margin:7px 0}
+.acoustic-method p{color:#ada1b9;font-size:12px;line-height:1.65;margin:0}
+.acoustic-factors{background:#14131a;border:1px solid #4c405a;margin:14px 0;padding:16px}
+.acoustic-factor-head{display:flex;justify-content:space-between;gap:8px;color:#c6a7e6;letter-spacing:.05em;font-size:9px;font-weight:800}
+.acoustic-factor-head strong{color:#e8d7ff;font-size:16px}
+.acoustic-factors>p{color:#aaa0b4;font-size:11px;line-height:1.55;margin:12px 0}
+.acoustic-factor-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;border-top:1px solid #393043;padding-top:11px}
+.acoustic-factor-grid>div{display:flex;align-items:center;justify-content:space-between;gap:8px;color:#b6aabf;font-size:11px}
+.acoustic-factor-grid strong{color:#ddc7f6}
+.acoustic-signal-confidence{display:block;font-size:10px;color:#9288a0;margin-top:12px}
+.acoustic-no-evidence{font-size:11px;color:#8d8398!important;margin:12px 0}
+@media(max-width:650px){.acoustic-method{padding:15px}.acoustic-factors{padding:12px}.acoustic-factor-grid{grid-template-columns:1fr}}

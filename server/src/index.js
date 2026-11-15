@@ -406,21 +406,37 @@ app.get("/api/projects/:id/recommendations",auth,asyncRoute(async(req,res)=>{
  if(!project||String(project.owner)!==req.auth.id)return sendError(res,403,"Only project owners may see recommendations.");
  const candidates=await User.find({_id:{$ne:req.auth.id}}).sort({_id:1}).limit(500)
   .select("displayName profession genres skills creativeTags available portfolio preferredRoles preferredGenres preferredTags");
- // Only compare music clips to music clips. Do not infer a voice score or
- // treat missing recordings as a negative signal. Never retrieve audio bytes.
- const ownerClip=await AudioSample.findOne({owner:req.auth.id,kind:"music","analysis.confidence":{$gte:.2}})
-  .sort({createdAt:-1}).select("+analysis -audio").lean();
- const reference=ownerClip?.analysis?.source==="browser-estimate"?ownerClip.analysis:null;
- let audioContext=null;
- if(reference){
-  const clips=await AudioSample.find({owner:{$in:candidates.map(u=>u._id)},kind:"music","analysis.confidence":{$gte:.2}})
-   .sort({createdAt:-1}).select("owner createdAt +analysis -audio").lean();
-  const byCreator={};
-  for(const clip of clips){
+ // Music and vocal features are optional. Missing evidence never reduces MCCA.
+ // The query retrieves versioned metadata only. No raw audio bytes are read.
+ const candidateIds=candidates.map(u=>u._id);
+ const roles=(project.requiredRoles||[]).map(x=>String(x).toLowerCase());
+ const needsVocal=roles.some(x=>["vocalist","singer","rapper","recording artist","artist"].includes(x));
+ const [ownerMusic,ownerVocal]=await Promise.all([
+  AudioSample.findOne({owner:req.auth.id,kind:"music","analysis.confidence":{$gte:.2}})
+   .sort({createdAt:-1}).select("+analysis -audio").lean(),
+  needsVocal?AudioSample.findOne({owner:req.auth.id,kind:"vocal","vocalAnalysis.confidence":{$gte:.2}})
+   .sort({createdAt:-1}).select("+vocalAnalysis -audio").lean():Promise.resolve(null)
+ ]);
+ const reference=ownerMusic?.analysis?.source==="browser-estimate"?ownerMusic.analysis:null;
+ const vocalReference=ownerVocal?.vocalAnalysis?.source==="browser-estimate"?ownerVocal.vocalAnalysis:null;
+ const audioContext=(reference||vocalReference)?{reference,vocalReference,byCreator:{},vocalByCreator:{}}:null;
+ if(audioContext){
+  const [musicClips,vocalClips]=await Promise.all([
+   reference?AudioSample.find({owner:{$in:candidateIds},kind:"music","analysis.confidence":{$gte:.2}})
+    .sort({createdAt:-1}).select("owner createdAt +analysis -audio").lean():Promise.resolve([]),
+   vocalReference?AudioSample.find({owner:{$in:candidateIds},kind:"vocal","vocalAnalysis.confidence":{$gte:.2}})
+    .sort({createdAt:-1}).select("owner createdAt +vocalAnalysis -audio").lean():Promise.resolve([])
+  ]);
+  for(const clip of musicClips){
    const id=String(clip.owner);
-   if(!byCreator[id]&&clip.analysis?.source==="browser-estimate")byCreator[id]=clip.analysis;
+   if(!audioContext.byCreator[id]&&clip.analysis?.source==="browser-estimate")
+    audioContext.byCreator[id]=clip.analysis;
   }
-  audioContext={reference,byCreator};
+  for(const clip of vocalClips){
+   const id=String(clip.owner);
+   if(!audioContext.vocalByCreator[id]&&clip.vocalAnalysis?.source==="browser-estimate")
+    audioContext.vocalByCreator[id]=clip.vocalAnalysis;
+  }
  }
  const result=rank(project.toObject(),candidates,audioContext);
  const blind=mode==="blind";
@@ -434,13 +450,13 @@ app.get("/api/projects/:id/recommendations",auth,asyncRoute(async(req,res)=>{
    portfolio:user.portfolio.map(x=>({title:x.title,url:x.url}))}:{anonymousRef:"Candidate "+String(i+1).padStart(2,"0")};
   return {...identity,matchId:visible?item.id:sealCandidate(item.id,String(project._id)),shortlisted,
    score:item.score,baseScore:item.baseScore,forward:item.forward,reverse:item.reverse,factors:item.factors,
-   audio:item.audio?{score:item.audio.score,factors:item.audio.factors,confidence:item.audio.confidence,explanation:item.audio.explanation}:null,
+   audio:item.audio?{score:item.audio.score,factors:item.audio.factors,confidence:item.audio.confidence,sources:item.audio.sources||[item.audio.type],explanation:item.audio.explanation}:null,
    reverseFactors:item.reverseFactors,roleMatch:item.roleMatch,evidence:item.evidence,
    explanation:item.explanation,baseline:item.baseline,
    ...(visible?{genres:user.genres,skills:user.skills,creativeTags:user.creativeTags,available:user.available}: {})};
  });
  res.setHeader("Cache-Control","no-store");
- res.json({mode,method:result.method,weights:result.weights,audioWeight:result.audioWeight,audioEnabled:!!audioContext,summary:evaluateRanking(result.ranked),ranked});
+ res.json({mode,method:result.method,weights:result.weights,audioWeight:result.audioWeight,audioEnabled:!!audioContext,audioTypes:[...(reference?["music"]:[]),...(vocalReference?["vocal"]:[])],audioCompared:result.ranked.filter(x=>x.audio).length,summary:evaluateRanking(result.ranked),ranked});
 }));
 app.post("/api/projects/:id/shortlist",auth,asyncRoute(async(req,res)=>{
   if(!idOk(req.params.id)||typeof req.body.candidateId!=="string")return sendError(res,400,"Invalid IDs.");
