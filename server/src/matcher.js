@@ -1,4 +1,4 @@
-import {audioCompatibility,audioAdjustedScore,AUDIO_BLEND} from "./audio-matching.js";
+import {audioCompatibility,vocalCompatibility,combineAcoustic,audioAdjustedScore,AUDIO_BLEND} from "./audio-matching.js";
 // MusicLink MCCA v2. Deterministic, transparent research prototype.
 // This is a weighted matching heuristic, not a trained or validated AI model.
 export const WEIGHTS=Object.freeze({genre:.20,skills:.25,creative:.25,portfolio:.20,availability:.10});
@@ -66,7 +66,10 @@ export function rank(project,candidates,audioContext=null){
  const ranked=(Array.isArray(candidates)?candidates:[]).map(u=>{
   const f=forward(project,u),r=reverse(project,u);
   const baseScore=round(Math.sqrt(f.value*r.value));
-  const audio=audioContext?audioCompatibility(audioContext.reference,audioContext.byCreator?.[String(u._id||u.id)]):null;
+  const id=String(u._id||u.id);
+  const music=audioContext?audioCompatibility(audioContext.reference,audioContext.byCreator?.[id]):null;
+  const vocal=audioContext?.vocalReference?vocalCompatibility(audioContext.vocalReference,audioContext.vocalByCreator?.[id]):null;
+  const audio=combineAcoustic(music,vocal);
   const score=audioAdjustedScore(baseScore,audio);
   const genreOnly=overlap(project.genres,u.genres);
   const profileSimilarity=round((genreOnly+overlap(project.requiredSkills,u.skills))/2);
@@ -83,7 +86,7 @@ export function rank(project,candidates,audioContext=null){
    evidence,baseline:{genreOnly,profileSimilarity}
   };
  }).sort((a,b)=>b.score-a.score||a.id.localeCompare(b.id));
- return {method:audioContext?.reference?"MCCA-RCC v2 + acoustic pilot":"MCCA-RCC v2",weights:WEIGHTS,audioWeight:audioContext?.reference?AUDIO_BLEND:0,ranked};
+ return {method:(audioContext?.reference||audioContext?.vocalReference)?"MCCA-RCC v2 + acoustic pilot":"MCCA-RCC v2",weights:WEIGHTS,audioWeight:(audioContext?.reference||audioContext?.vocalReference)?AUDIO_BLEND:0,ranked};
 }
 export function evaluateRanking(ranked){
  if(!ranked.length)return {candidateCount:0,meanScore:0,meanGenreBaseline:0,meanProfileBaseline:0,topMatches:0};
