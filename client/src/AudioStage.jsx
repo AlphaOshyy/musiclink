@@ -13,6 +13,7 @@ function supportsMotion(){
 export default function AudioStage({src,title}){
  const audio=useRef(null),mount=useRef(null);
  const [enabled,setEnabled]=useState(false);
+ const [activated,setActivated]=useState(false);
  const [status,setStatus]=useState("idle");
  const [playing,setPlaying]=useState(false);
  const [reducedMotion,setReducedMotion]=useState(false);
@@ -23,7 +24,7 @@ export default function AudioStage({src,title}){
   return()=>media.removeEventListener?.("change",update);
  },[]);
  useEffect(()=>{
-  if(!enabled||!audio.current||!mount.current)return;
+  if(!activated||!audio.current||!mount.current)return;
   let cancelled=false,scene;
   setStatus("loading");
   createListeningRoom({audio:audio.current,mount:mount.current}).then(controller=>{
@@ -33,11 +34,11 @@ export default function AudioStage({src,title}){
    if(!cancelled){setStatus("error");setEnabled(false)}
   });
   return()=>{cancelled=true;scene?.destroy()};
- },[enabled,src]);
- const toggle=()=>{if(!supportsMotion()){setReducedMotion(true);return}setEnabled(v=>!v)};
+ },[activated,src]);
+ const toggle=()=>{if(!supportsMotion()){setReducedMotion(true);return}setActivated(true);setEnabled(v=>!v)};
  return <section className="ml-listening-room" aria-label={"Listen to "+title}>
   <div className="ml-listening-room-head"><div className="ml-listening-room-identity"><AudioLines size={17}/><span>PLAYBACK / {title}</span></div><button type="button" className={"ml-room-toggle"+(enabled?" is-active":"")} disabled={reducedMotion} onClick={toggle} aria-pressed={enabled}><Layers3 size={15}/>{enabled?"Close 3D room":"Open 3D room"}</button></div>
-  {enabled&&<div className="ml-room-canvas" ref={mount} role="img" aria-label="Three-dimensional audio spectrum that reacts to playback">
+  {activated&&<div className="ml-room-canvas" ref={mount} style={{display:enabled?"block":"none"}} role="img" aria-label="Three-dimensional audio spectrum that reacts to playback">
    <div className="ml-room-frame-label"><span>LIVE FREQUENCY RESPONSE</span><span>THREE.JS / EXPERIMENTAL</span></div>
    {status==="loading"&&<span className="ml-room-loading">Preparing the listening room...</span>}
   </div>}

@@ -80,7 +80,7 @@ export async function createListeningRoom({audio,mount}){
  const frame=(time)=>{
   if(disposed)return;
   raf=requestAnimationFrame(frame);
-  if(!visible||time-last<28)return;
+  if(!visible||mount.getClientRects().length===0||time-last<28)return;
   last=time;
   const active=!audio.paused&&!audio.ended&&audio.readyState>=2;
   if(active)analyser.getByteFrequencyData(levelsData);
