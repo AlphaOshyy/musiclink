@@ -76,6 +76,7 @@ const AudioSample = model("AudioSample",new Schema({
  mimeType:{type:String,enum:["audio/mpeg","audio/wav"],required:true},
  byteSize:{type:Number,required:true,max:2097152},
  analysis:{type:Schema.Types.Mixed,default:null,select:false},
+ vocalAnalysis:{type:Schema.Types.Mixed,default:null,select:false},
  audio:{type:Buffer,required:true,select:false}
 },opts));
 export { User, Project, Application, Invitation, VerificationRequest, AudioSample };
