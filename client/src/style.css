@@ -881,3 +881,14 @@ h1,h2,h3,.brand-lockup .wordmark{font-family:'Syne','Space Grotesk',sans-serif}
 .audio-analysis p{font-size:11px;color:#9990a6;max-width:640px;margin:12px 0 0;line-height:1.6}
 .audio-analysis-unavailable{background:#1a1720;color:#b8a5ca;border:1px dashed #4f415c;font-size:11px;padding:13px;margin-top:13px}
 @media(max-width:650px){.audio-analysis-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:17px}.audio-analysis{padding:13px}}
+
+/* Day 11 / descriptive vocal signal measurements */
+.vocal-measures{background:#171421;border:1px solid #64517c;padding:17px;margin-top:11px}
+.vocal-range-note{display:flex;flex-wrap:wrap;align-items:baseline;gap:9px 17px;margin:18px 0 8px}
+.vocal-range-note strong{font-family:'Syne',sans-serif;color:#e5c9ff;font-size:clamp(24px,3vw,35px);letter-spacing:-.045em}
+.vocal-range-note strong span{font-family:'DM Sans',sans-serif;color:#88749b;font-weight:500;font-size:12px;letter-spacing:0}
+.vocal-range-note>span{font-size:11px;color:#aa99ba}
+.vocal-measures .audio-analysis-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+.vocal-measures>p{font-size:11px;line-height:1.65;color:#a99bb8}
+.vocal-measures .audio-analysis-grid strong{font-size:clamp(12px,1.5vw,18px)}
+@media(max-width:650px){.vocal-measures{padding:13px}.vocal-measures .audio-analysis-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
