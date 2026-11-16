@@ -39,3 +39,6 @@ Run `node server/scripts/evaluate-final.mjs` from the repository root to generat
 
 ## Release acceptance
 The project is technically ready for a controlled academic demonstration after automated suites and deployment status pass. A final client-facing walkthrough, verified admin account and live musician study are still distinct operational/research tasks. Keep the demo labelled as a prototype, not a commercial-grade production service.
+
+## Final automated synthetic benchmark observed on 2026-11-16
+Using eight fictional creator records and three synthetic project scenarios, precision@3 was 0.778 for both MCCA and a genre-only baseline. Recall@3 was 1.000 for both. This illustrates deterministic functioning and does not demonstrate superiority to a baseline. The suite also confirmed the 12% acoustic influence bound and exact profile-only fallback when music evidence is absent. No real-user or listening-study metrics were collected during the synthetic benchmark.

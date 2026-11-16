@@ -21,3 +21,6 @@ Evaluate 5 tasks: sign up, complete profile, create project, shortlist in blind 
 
 ## Constraints and data ethics
 Never expose private emails, passwords, tokens, unapproved account data or private proof codes in research artifacts. Store consent and labelled outcomes separately. Report confidence and limitations. The app is a research prototype, not an independently audited recommendation engine.
+
+## Observed synthetic evaluation result, 2026-11-16
+Three scenarios, eight fictional creators: precision@3 MCCA = 0.778 and genre-only = 0.778; recall@3 MCCA = 1.000 and genre-only = 1.000. This means the synthetic benchmark found no ranking advantage for MCCA over the genre-only baseline. Use real independently labelled music collaboration tasks to evaluate the project's primary hypothesis.
