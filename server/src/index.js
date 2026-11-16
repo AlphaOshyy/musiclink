@@ -18,6 +18,10 @@ import { canRespond, canInvite, canRemoveShortlist } from "./invitation-policy.j
 import { validateRequest, canReview, newProofCode } from "./verification.js";
 
 const app = express();
+// Vercel places one trusted reverse proxy in front of the Node function.
+// Use exactly one hop instead of blindly trusting arbitrary forwarded headers.
+app.set("trust proxy", process.env.VERCEL==="1" ? 1 : false);
+app.disable("x-powered-by");
 app.use(helmet());
 app.use(cors({ origin: process.env.CLIENT_ORIGIN || "http://localhost:5173" }));
 app.use(express.json({ limit: "128kb" }));
