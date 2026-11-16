@@ -1,53 +1,67 @@
 # MusicLink
 
-MusicLink is a research-focused web application for connecting independent music creators through explainable, reciprocal recommendations.
+MusicLink is a research prototype for discovering independent musicians and coordinating music collaborations. The current application includes a React/Vite frontend, Node/Express REST API, MongoDB storage and a deterministic reciprocal MCCA ranking implementation. The separate Python recommendation prototype remains in the repository for research/testing.
 
-## Project stack
-- React + Vite web client
-- Node.js + Express REST API
-- MongoDB + Mongoose
-- Python + FastAPI recommendation service
+## Live application
+- Frontend: https://musiclink-web.vercel.app
+- Backend health: https://musiclink-api.vercel.app/api/health
+- Database health: https://musiclink-api.vercel.app/api/health/db
 
-## Setup
+## Delivered capabilities
+1. Registration, authentication, creator portfolios and project listings.
+2. Search, project applications, creator preferences and explainable MCCA scoring.
+3. Blind/visible shortlisting, invitation review, approval and response status.
+4. Artist verification requests with manually reviewed website/channel proof codes.
+5. Authenticated MP3/WAV uploads, native audio playback, owner-only deletion.
+6. Experimental browser signal analysis: BPM, estimated musical key, energy, style/mood hints, vocal pitch range and pitch variability.
+7. Optional confidence-weighted acoustic features in MCCA, capped at 12%; missing clips do not reduce scores.
+8. On-demand Three.js frequency visualizer during real audio playback, with native media controls and reduced-motion behavior.
 
-Prerequisites: Node.js 20+, Python 3.11+, MongoDB running locally.
+## Start locally
+Requires Node.js 22+, Python 3.11+ for optional Python prototype, and MongoDB.
 
-### Terminal 1: recommendation service
-```bash
-cd recommender
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn main:app --reload --port 8000
-```
-
-### Terminal 2: API
+API:
 ```bash
 cd server
 cp .env.example .env
 npm install
+npm test
 npm run dev
 ```
+Configure MONGO_URI, CLIENT_ORIGIN and a strong JWT_SECRET in server/.env. Never commit secrets.
 
-### Terminal 3: frontend
+Client:
 ```bash
 cd client
 npm install
+npm run build
 npm run dev
 ```
+Configure VITE_API_URL to the backend API base URL where required. Open http://localhost:5173.
 
-Open http://localhost:5173 . API: http://localhost:4000/api/health . Recommender: http://localhost:8000/health .
+Optional Python prototype:
+```bash
+cd recommender
+pip install -r requirements.txt
+pytest -q
+uvicorn main:app --reload --port 8000
+```
 
-Never commit secrets. Change JWT_SECRET in server/.env. Use MongoDB locally or a private MongoDB Atlas database.
+## Evaluation and tests
+```bash
+cd server
+npm test
+node scripts/evaluate-final.mjs
+cd ../client
+npm run build
+node --test src/media.test.js src/musicAnalysis.test.js src/vocalAnalysis.test.js src/listeningRoomMath.test.js
+cd ../recommender
+pytest -q
+```
+Synthetic benchmark labels are illustrative, not observed musician outcomes. See [Final Handover](docs/FINAL_HANDOVER.md) and [Evaluation Protocol](docs/FINAL_EVALUATION.md).
 
-## Research features
-MCCA: M(A,B) = 0.20G + 0.25S + 0.25C + 0.20P + 0.10Av.
-RCC: sqrt(M(A,B) * M(B,A)).
-Factors are normalized to 0..100. Weights are initial assumptions, not validated outcomes.
+## Academic and technical limitations
+MCCA is a weighted heuristic, not a machine-learned or scientifically validated compatibility predictor. Audio metadata comes from clients and is not cryptographically attested. BPM, key and vocal pitch estimates have not been evaluated against annotated field recordings. Artist verification checks control of a page or channel, not legal identity. Three.js requires capable browsers. Production adoption requires accessibility, user acceptance, privacy and security reviews.
 
-Blind review excludes direct identifiers and popularity fields at API level. Identity reveal is permitted for shortlisted candidates and the project owner only. No promise is made that portfolio URLs or creative metadata are inherently anonymous; use anonymized samples for controlled studies.
-
-This is the new implementation. The previous static prototype is preserved on the backup-pre-rebuild-2026-11-06 branch.
-
-## Current phase
-Core application skeleton with registration/login, creator profiles, portfolio entries, project management, applications, invitations, recommendations, and blind review. Local integration, end-to-end tests, production deployment, research data collection, and hardening remain to be completed.
+## Previous prototype
+The earlier static prototype is preserved in branch `backup-pre-rebuild-2026-11-06`.
