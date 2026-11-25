@@ -15,6 +15,7 @@ const User = model("User", new Schema({
   profession: { type: String, default: "Artist" },
   bio: { type: String, default: "", maxlength: 1500 },
   available: { type: Boolean, default: true },
+  publicPageEnabled: {type:Boolean,default:false,index:true},
   preferredRoles: tags(), preferredGenres: tags(), preferredTags: tags(),
   portfolio: [{
     title: { type: String, required: true },
