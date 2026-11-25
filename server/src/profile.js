@@ -24,10 +24,6 @@ export function validateProfile(body){
   if(key==="displayName"&&value.length<2)return {error:"Display name must have at least two characters."};
   update[key]=value;
  }
- if(own(body,"publicPageEnabled")){
-  if(typeof body.publicPageEnabled!=="boolean")return {error:"Public profile visibility must be true or false."};
-  update.publicPageEnabled=body.publicPageEnabled;
- }
  if(own(body,"available")){
   if(typeof body.available!=="boolean")return {error:"Availability must be a boolean."};
   update.available=body.available;
@@ -58,7 +54,7 @@ export function profileCompleteness(u){
 }
 import {publicVerification} from "./verification.js";
 export function publicProfile(u){
- return {id:String(u._id),...publicVerification(u),publicPageEnabled:u.publicPageEnabled===true,displayName:u.displayName,profession:u.profession,avatarUrl:u.avatarUrl||"",genres:u.genres||[],skills:u.skills||[],creativeTags:u.creativeTags||[],available:u.available===true,bio:u.bio||"",portfolio:u.portfolio||[],preferredRoles:u.preferredRoles||[],preferredGenres:u.preferredGenres||[],preferredTags:u.preferredTags||[],completeness:profileCompleteness(u)};
+ return {id:String(u._id),...publicVerification(u),displayName:u.displayName,profession:u.profession,avatarUrl:u.avatarUrl||"",genres:u.genres||[],skills:u.skills||[],creativeTags:u.creativeTags||[],available:u.available===true,bio:u.bio||"",portfolio:u.portfolio||[],preferredRoles:u.preferredRoles||[],preferredGenres:u.preferredGenres||[],preferredTags:u.preferredTags||[],completeness:profileCompleteness(u)};
 }
 export function creatorSearch(query){
  if(!isRecord(query))return {error:"Invalid search."};

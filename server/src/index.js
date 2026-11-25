@@ -13,7 +13,6 @@ import {validateMusicAnalysis} from "./music-analysis.js";
 import {validateVocalAnalysis} from "./vocal-analysis.js";
 import { rank, evaluateRanking } from "./matcher.js";
 import { publicProfile, validateProfile, validatePortfolio, creatorSearch } from "./profile.js";
-import { publicArtist } from "./public-artists.js";
 import { validateProject, validateApplication, validateProjectQuery } from "./projects.js";
 import { canRespond, canInvite, canRemoveShortlist } from "./invitation-policy.js";
 import { validateRequest, canReview, newProofCode } from "./verification.js";
@@ -266,36 +265,18 @@ app.delete("/api/me/portfolio/:id",auth,asyncRoute(async(req,res)=>{
  if(!item)return sendError(res,404,"Sample not found.");
  item.deleteOne();await user.save();res.json(publicProfile(user));
 }));
-// Public artist discovery: accounts remain private until owners explicitly opt in.
-app.get("/api/public/creators",asyncRoute(async(req,res)=>{
- const count=Number(req.query.limit||6);
- if(!Number.isInteger(count)||count<1||count>12)return sendError(res,400,"Invalid artist listing limit.");
- const creators=await User.find({publicPageEnabled:true})
-  .sort({verifiedAt:-1,updatedAt:-1,_id:-1}).limit(count)
-  .select("displayName profession avatarUrl bio genres skills creativeTags available portfolio verifiedAt verifiedArtistName verifiedPlatform publicPageEnabled");
- res.setHeader("Cache-Control","no-store");
- res.json(creators.map(publicArtist).filter(Boolean));
-}));
-app.get("/api/public/creators/:id",asyncRoute(async(req,res)=>{
- if(!idOk(req.params.id))return sendError(res,400,"Invalid artist ID.");
- const artist=await User.findOne({_id:req.params.id,publicPageEnabled:true})
-  .select("displayName profession avatarUrl bio genres skills creativeTags available portfolio verifiedAt verifiedArtistName verifiedPlatform publicPageEnabled");
- const result=publicArtist(artist);
- if(!result)return sendError(res,404,"Artist page not available.");
- res.setHeader("Cache-Control","no-store");res.json(result);
-}));
 app.get("/api/creators",auth,asyncRoute(async(req,res)=>{
  const parsed=creatorSearch(req.query);
  if(parsed.error)return sendError(res,400,parsed.error);
  const users=await User.find({...parsed.filter,_id:{$ne:req.auth.id}})
    .sort({createdAt:-1,_id:-1}).skip((parsed.page-1)*parsed.limit).limit(parsed.limit)
-   .select("displayName profession avatarUrl genres skills creativeTags available bio portfolio preferredRoles preferredGenres preferredTags verifiedAt verifiedArtistName verifiedPlatform publicPageEnabled");
+   .select("displayName profession avatarUrl genres skills creativeTags available bio portfolio preferredRoles preferredGenres preferredTags verifiedAt verifiedArtistName verifiedPlatform");
  res.setHeader("Cache-Control","private, no-store");res.json(users.map(publicProfile));
 }));
 app.get("/api/creators/:id",auth,asyncRoute(async(req,res)=>{
  if(!idOk(req.params.id))return sendError(res,400,"Invalid creator ID.");
  const user=await User.findById(req.params.id)
-  .select("displayName profession avatarUrl genres skills creativeTags available bio portfolio preferredRoles preferredGenres preferredTags verifiedAt verifiedArtistName verifiedPlatform publicPageEnabled");
+  .select("displayName profession avatarUrl genres skills creativeTags available bio portfolio preferredRoles preferredGenres preferredTags verifiedAt verifiedArtistName verifiedPlatform");
  if(!user)return sendError(res,404,"Creator not found.");
  res.setHeader("Cache-Control","private, no-store");res.json(publicProfile(user));
 }));
