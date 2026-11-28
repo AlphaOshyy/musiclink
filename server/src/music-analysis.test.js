@@ -17,3 +17,12 @@ test("analysis rejects unknown properties and invalid classifications",()=>{
   assert.ok(validateMusicAnalysis(value).error);
  }
 });
+
+test("accept pretrained genre classification only with supported labels and consistent probabilities",()=>{
+ const payload={version:ANALYSIS_VERSION,duration:10,bpm:120,key:"C",mode:"minor",energy:.5,brightness:.3,rhythmStrength:.7,mood:"Neutral",styleHint:"Percussive / beat-driven",confidence:.6,
+ genre:"Hip Hop",genreConfidence:.8,genreCandidates:[{label:"hiphop",score:.8},{label:"pop",score:.2}],genreModel:"onnx-community/Musical-genres-Classification-Hubert-V1-ONNX"};
+ assert.equal(validateMusicAnalysis(payload).analysis.genre,"Hip Hop");
+ assert.ok(validateMusicAnalysis({...payload,genreModel:"other"}).error);
+ assert.ok(validateMusicAnalysis({...payload,genre:"Trap"}).error);
+ assert.ok(validateMusicAnalysis({...payload,genreCandidates:[{label:"pop",score:.8}]}).error);
+});

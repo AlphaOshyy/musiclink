@@ -134,8 +134,12 @@ const submitAudio=async(e)=>{e.preventDefault();if(audioBusy)return;setAudioBusy
   const data=await response.json().catch(()=>({}));
   if(!response.ok)throw new Error(data.error||"Upload failed.");
   try{
-   const enriched=audioKind==="music"?await attachAutomaticGenre(file,analysis):analysis;
-   await request("/me/audio/"+data.id+"/analysis",{method:"PUT",body:JSON.stringify(enriched)});
+   await request("/me/audio/"+data.id+"/analysis",{method:"PUT",body:JSON.stringify(analysis)});
+   if(audioKind==="music"){
+    setNotice("Audio saved. Detecting its genre using the optional pretrained model...");
+    const enriched=await attachAutomaticGenre(file,analysis);
+    if(enriched.genre)await request("/me/audio/"+data.id+"/analysis",{method:"PUT",body:JSON.stringify(enriched)});
+   }
    if(audioKind==="vocal"){
     const vocal=await analyzeVocalFile(file);
     await request("/me/audio/"+data.id+"/vocal-analysis",{method:"PUT",body:JSON.stringify(vocal)});
@@ -154,8 +158,12 @@ const analyzeExisting=async(id)=>{if(analysisBusy)return;setAnalysisBusy(id);
   if(!response.ok)throw new Error("Audio unavailable for analysis.");
   const blob=await response.blob();
   const analysis=await analyzeAudioFile(blob);
-  const enriched=myAudio.find(x=>x.id===id)?.kind==="music"?await attachAutomaticGenre(blob,analysis):analysis;
-  await request("/me/audio/"+id+"/analysis",{method:"PUT",body:JSON.stringify(enriched)});
+  await request("/me/audio/"+id+"/analysis",{method:"PUT",body:JSON.stringify(analysis)});
+  if(myAudio.find(x=>x.id===id)?.kind==="music"){
+   setNotice("Music metrics saved. Checking genre...");
+   const enriched=await attachAutomaticGenre(blob,analysis);
+   if(enriched.genre)await request("/me/audio/"+id+"/analysis",{method:"PUT",body:JSON.stringify(enriched)});
+  }
   if(myAudio.find(x=>x.id===id)?.kind==="vocal"){
    const vocal=await analyzeVocalFile(blob);
    await request("/me/audio/"+id+"/vocal-analysis",{method:"PUT",body:JSON.stringify(vocal)});
