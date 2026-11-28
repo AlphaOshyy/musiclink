@@ -9,7 +9,7 @@ const styles=["Rhythmic / electronic","Acoustic / organic","Ambient / atmospheri
 const moods=["Energetic","Relaxed","Reflective","Bright","Intense","Neutral"];
 export function validateMusicAnalysis(payload){
  if(!payload||typeof payload!=="object"||Array.isArray(payload))return {error:"Invalid music analysis."};
- const fields=["version","duration","bpm","key","mode","energy","brightness","rhythmStrength","mood","styleHint","confidence"];
+ const fields=["version","duration","bpm","key","mode","energy","brightness","rhythmStrength","mood","styleHint","confidence","genre","genreConfidence","genreCandidates","genreModel"];
  if(Object.keys(payload).some(k=>!fields.includes(k)))return {error:"Unsupported analysis data."};
  if(payload.version!==ANALYSIS_VERSION)return {error:"Unsupported analysis version."};
  if(!inRange(payload.duration,0.5,180))return {error:"Invalid audio duration."};
@@ -19,10 +19,20 @@ export function validateMusicAnalysis(payload){
  if((payload.key===null)!==(payload.mode===null))return {error:"Key and mode must both be known or unknown."};
  if(!inRange(payload.energy,0,1)||!inRange(payload.brightness,0,1)||!inRange(payload.rhythmStrength,0,1)||!inRange(payload.confidence,0,1))return {error:"Invalid acoustic feature."};
  if(!moods.includes(payload.mood)||!styles.includes(payload.styleHint))return {error:"Invalid style or mood hint."};
+ const allowedGenres=["blues","classical","country","disco","hiphop","jazz","metal","pop","reggae","rock"];
+ const model="onnx-community/Musical-genres-Classification-Hubert-V1-ONNX";
+ const hasGenre=payload.genre!==undefined;
+ if(hasGenre){
+  if(payload.genreModel!==model||typeof payload.genre!=="string"||!["Blues","Classical","Country","Disco","Hip Hop","Jazz","Metal","Pop","Reggae","Rock"].includes(payload.genre)||!inRange(payload.genreConfidence,0,1))return {error:"Invalid genre classification metadata."};
+  if(!Array.isArray(payload.genreCandidates)||payload.genreCandidates.length<1||payload.genreCandidates.length>3||payload.genreCandidates.some(x=>!x||!allowedGenres.includes(x.label)||!inRange(x.score,0,1)))return {error:"Invalid genre candidates."};
+  const top=payload.genreCandidates[0];
+  const name=top.label==="hiphop"?"Hip Hop":top.label.charAt(0).toUpperCase()+top.label.slice(1);
+  if(name!==payload.genre||top.score!==payload.genreConfidence||payload.genreCandidates.some((x,i,a)=>i>0&&x.score>a[i-1].score))return {error:"Inconsistent genre results."};
+ }else if(payload.genreModel!==undefined||payload.genreConfidence!==undefined||payload.genreCandidates!==undefined)return {error:"Incomplete genre classification."};
  return {analysis:{
   version:ANALYSIS_VERSION,duration:payload.duration,bpm:payload.bpm,key:payload.key,mode:payload.mode,
   energy:payload.energy,brightness:payload.brightness,rhythmStrength:payload.rhythmStrength,
   mood:payload.mood,styleHint:payload.styleHint,confidence:payload.confidence,
-  source:"browser-estimate",updatedAt:new Date()
+  ...(hasGenre?{genre:payload.genre,genreModel:payload.genreModel,genreConfidence:payload.genreConfidence,genreCandidates:payload.genreCandidates}:{}),source:"browser-estimate",updatedAt:new Date()
  }};
 }

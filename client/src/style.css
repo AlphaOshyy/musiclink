@@ -953,3 +953,13 @@ h1,h2,h3,.brand-lockup .wordmark{font-family:'Syne','Space Grotesk',sans-serif}
 @media(min-width:1100px){.creator-match-grid:has(> .match-card:only-child) .match-card{max-width:none}.creator-match-grid:has(> .match-card:only-child) .factor-list{max-width:880px}}
 @media(max-width:1000px){.creator-match-grid{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:600px){.creator-match-grid .match-card{padding:19px!important}.creator-match-grid .match-card .factor-row{grid-template-columns:85px minmax(0,1fr) 40px;gap:7px}.rec-overview{padding:20px!important}.acoustic-method{padding:16px}}
+
+/* AI-assisted music genre prediction: honest model confidence */
+.auto-genre{display:flex;justify-content:space-between;gap:15px;align-items:center;background:#262031;border:1px solid #71558b;padding:14px 17px;margin:12px 0}
+.auto-genre>div:first-child{display:grid;gap:5px}
+.auto-genre span{font-size:10px;color:#c2aadf;letter-spacing:.07em}
+.auto-genre strong{font:800 clamp(19px,2vw,27px) 'Syne',sans-serif;color:#f1e3ff}
+.auto-genre small{font-size:11px;color:#b7a5c7}
+.auto-genre-alternatives{display:grid;gap:6px;text-align:right}
+.genre-unavailable{border:1px dashed #544464;padding:11px;background:#1b1723;color:#b9a6c7;font-size:11px}
+@media(max-width:600px){.auto-genre{flex-direction:column;align-items:start}.auto-genre-alternatives{text-align:left}}

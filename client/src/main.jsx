@@ -111,7 +111,17 @@ function App(){
   setNotice("Verification "+(decision==="approve"?"approved.":"rejected."));
  })};
  const revokeVerification=async(item)=>{await safe(async()=>{const reason=(reviewNotes[item.id]||"").trim();await request("/verification/admin/"+item.id+"/revoke",{method:"POST",body:JSON.stringify({reason})});setVerificationQueue(await request("/verification/admin/queue?status=approved"));await refresh();setNotice("Artist badge revoked.")})};
- const submitAudio=async(e)=>{e.preventDefault();if(audioBusy)return;setAudioBusy(true);
+ const attachAutomaticGenre=async(file,analysis)=>{
+ try{
+  const {predictMusicGenre}=await import("./genreClassifier.js");
+  const genre=await predictMusicGenre(file);
+  return {...analysis,...genre};
+ }catch(error){
+  console.warn("Broad-genre model unavailable, retaining DSP analysis:",error);
+  return analysis;
+ }
+};
+const submitAudio=async(e)=>{e.preventDefault();if(audioBusy)return;setAudioBusy(true);
  try{await safe(async()=>{
   if(!audioFile)throw new Error("Select an MP3 or WAV file.");
   if(audioFile.size>2*1024*1024||audioFile.size<44)throw new Error("Audio must be under 2 MB.");
@@ -124,7 +134,8 @@ function App(){
   const data=await response.json().catch(()=>({}));
   if(!response.ok)throw new Error(data.error||"Upload failed.");
   try{
-   await request("/me/audio/"+data.id+"/analysis",{method:"PUT",body:JSON.stringify(analysis)});
+   const enriched=audioKind==="music"?await attachAutomaticGenre(file,analysis):analysis;
+   await request("/me/audio/"+data.id+"/analysis",{method:"PUT",body:JSON.stringify(enriched)});
    if(audioKind==="vocal"){
     const vocal=await analyzeVocalFile(file);
     await request("/me/audio/"+data.id+"/vocal-analysis",{method:"PUT",body:JSON.stringify(vocal)});
@@ -143,7 +154,8 @@ const analyzeExisting=async(id)=>{if(analysisBusy)return;setAnalysisBusy(id);
   if(!response.ok)throw new Error("Audio unavailable for analysis.");
   const blob=await response.blob();
   const analysis=await analyzeAudioFile(blob);
-  await request("/me/audio/"+id+"/analysis",{method:"PUT",body:JSON.stringify(analysis)});
+  const enriched=myAudio.find(x=>x.id===id)?.kind==="music"?await attachAutomaticGenre(blob,analysis):analysis;
+  await request("/me/audio/"+id+"/analysis",{method:"PUT",body:JSON.stringify(enriched)});
   if(myAudio.find(x=>x.id===id)?.kind==="vocal"){
    const vocal=await analyzeVocalFile(blob);
    await request("/me/audio/"+id+"/vocal-analysis",{method:"PUT",body:JSON.stringify(vocal)});
@@ -194,7 +206,7 @@ const analyzeExisting=async(id)=>{if(analysisBusy)return;setAnalysisBusy(id);
  const avatarColor=(name)=>["linear-gradient(135deg,#7141f2,#0aa3e0)","linear-gradient(135deg,#b044f0,#5359e0)","linear-gradient(135deg,#226ad8,#1dc6e8)","linear-gradient(135deg,#6835be,#cc4dc7)"][Array.from(name||"A").reduce((s,c)=>s+c.charCodeAt(0),0)%4];
  const badge=(items)=><div className="chips">{(items||[]).slice(0,5).map((x,i)=><span key={x+i}>{x}</span>)}</div>;
  const verifiedBadge=(u)=>u?.verified?<span className="artist-verified" title="Artist ownership reviewed by MusicLink"><BadgeCheck size={15} strokeWidth={2.3}/> MusicLink Verified</span>:null;
- const analysisDetails=(analysis)=>analysis?<div className="audio-analysis"><div className="audio-analysis-title"><span>ESTIMATED AUDIO PROFILE</span><span>EXPERIMENTAL · {Math.round(analysis.confidence*100)}% SIGNAL CONFIDENCE</span></div><div className="audio-analysis-grid"><div><span>BPM</span><strong>{analysis.bpm??"Unknown"}</strong></div><div><span>KEY</span><strong>{analysis.key?analysis.key+" "+analysis.mode:"Unknown"}</strong></div><div><span>ENERGY</span><strong>{Math.round(analysis.energy*100)}%</strong></div><div><span>MOOD HINT</span><strong>{analysis.mood}</strong></div></div><div className="audio-analysis-foot"><span>Style hint: {analysis.styleHint}</span><span>Rhythmic clarity: {Math.round(analysis.rhythmStrength*100)}%</span></div><p>Computed in the browser from this clip. Tempo and key are estimates. Mood and style are rule-based suggestions, not a trained classifier or a guarantee.</p></div>:<div className="audio-analysis-unavailable">No audio analysis yet. Select Analyze to estimate BPM, key, energy and style.</div>;
+ const analysisDetails=(analysis)=>analysis?<div className="audio-analysis"><div className="audio-analysis-title"><span>ESTIMATED AUDIO PROFILE</span><span>EXPERIMENTAL · {Math.round(analysis.confidence*100)}% SIGNAL CONFIDENCE</span></div><div className="audio-analysis-grid"><div><span>BPM</span><strong>{analysis.bpm??"Unknown"}</strong></div><div><span>KEY</span><strong>{analysis.key?analysis.key+" "+analysis.mode:"Unknown"}</strong></div><div><span>ENERGY</span><strong>{Math.round(analysis.energy*100)}%</strong></div><div><span>MOOD HINT</span><strong>{analysis.mood}</strong></div></div>{analysis.genre&&<div className="auto-genre"><div><span>AI DETECTED GENRE</span><strong>{analysis.genre}</strong><small>{Math.round(analysis.genreConfidence*100)}% model confidence</small></div><div className="auto-genre-alternatives">{(analysis.genreCandidates||[]).slice(1).map((g,i)=><span key={i}>{g.label} · {Math.round(g.score*100)}%</span>)}</div></div>}{!analysis.genre&&<p className="genre-unavailable">Genre detection unavailable. Musical key, major/minor mode, BPM, energy and mood are still estimated automatically. Genre recognition requires a one-time model download.</p>}<div className="audio-analysis-foot"><span>Style hint: {analysis.styleHint}</span><span>Rhythmic clarity: {Math.round(analysis.rhythmStrength*100)}%</span></div><p>Computed in the browser from this clip. Tempo and key are estimates. Genre is predicted by a pretrained ten-category model when available. Musical mode is major/minor. Mood and style are rule-based estimates. None is guaranteed.</p></div>:<div className="audio-analysis-unavailable">No audio analysis yet. Select Analyze to estimate BPM, key, energy and style.</div>;
 
  const vocalDetails=(sample)=>sample.kind==="vocal"?(sample.vocalAnalysis?<section className="vocal-measures"><div className="audio-analysis-title"><span>VOCAL PITCH ESTIMATE</span><span>{Math.round(sample.vocalAnalysis.confidence*100)}% SIGNAL CONFIDENCE</span></div>{sample.vocalAnalysis.medianHz!==null?<><div className="vocal-range-note"><strong>{sample.vocalAnalysis.lowNote} <span>to</span> {sample.vocalAnalysis.highNote}</strong><span>Estimated note range in this excerpt</span></div><div className="audio-analysis-grid"><div><span>MEDIAN PITCH</span><strong>{Math.round(sample.vocalAnalysis.medianHz)} Hz</strong></div><div><span>VOICED FRAMES</span><strong>{Math.round(sample.vocalAnalysis.voicedFraction*100)}%</strong></div><div><span>PITCH VARIATION</span><strong>{Math.round((1-sample.vocalAnalysis.stability)*100)}%</strong></div><div><span>PATTERN</span><strong>{sample.vocalAnalysis.characteristic}</strong></div></div></>:<p>No reliable vocal pitch was detected in the excerpt. Try a clean solo recording without backing music.</p>}<p>Experimental, signal-based estimates. Melody, vibrato, background instruments and noise affect results. Pitch variation is not a measure of singing quality, ability, identity, or health.</p></section>:<div className="audio-analysis-unavailable">No vocal range detected yet. Choose Analyze for a new estimate.</div>):null;
  const showOwner=(p)=>String(p.owner?._id||p.owner)===me?.id;
@@ -301,7 +313,7 @@ const analyzeExisting=async(id)=>{if(analysisBusy)return;setAnalysisBusy(id);
  <div className="verify-review-actions">{item.status==="pending"&&<><button className="btn-primary" disabled={!reviewConfirmed[item.id]} onClick={()=>reviewVerification(item,"approve")}>Approve verified artist <BadgeCheck size={16}/></button><button className="btn-outline" disabled={!(reviewNotes[item.id]||"").trim()} onClick={()=>reviewVerification(item,"reject")}>Reject request</button></>}{item.status==="approved"&&<button className="btn-outline" disabled={(reviewNotes[item.id]||"").trim().length<3} onClick={()=>revokeVerification(item)}>Revoke verification</button>}</div></article>):empty(<ShieldCheck size={26}/>,"No "+verificationQueueStatus+" requests.","Requests in this category will appear here.")}
  </section>}
       {page==="Portfolio"&&<div className="portfolio-layout">
- <section className="audio-upload-section"><div className="form-head"><span className="section-index">DAY 11 / VOCAL INTELLIGENCE</span><h2>Your sound, decoded.</h2><p>Upload music for BPM, key and energy estimates, or select Vocal sample to add pitch range and stability estimates. Analysis runs in your browser. Five samples maximum, 2 MB each.</p></div>
+ <section className="audio-upload-section"><div className="form-head"><span className="section-index">DAY 11 / VOCAL INTELLIGENCE</span><h2>Your sound, decoded.</h2><p>Upload music to automatically estimate genre, BPM, key, major/minor mode, energy and mood. Select Vocal sample for vocal pitch-range estimates. Genre analysis downloads a pretrained model on first use. Five clips maximum, 2 MB each.</p></div>
  <form className="audio-upload-form" onSubmit={submitAudio}>
  <label className="field"><span>Sample title</span><input required minLength={2} maxLength={100} value={audioTitle} onChange={e=>setAudioTitle(e.target.value)} placeholder="e.g. Midnight Hook Demo"/></label>
  <label className="field"><span>Type</span><select value={audioKind} onChange={e=>setAudioKind(e.target.value)}><option value="music">Music / instrumental</option><option value="vocal">Vocal sample</option></select></label>
